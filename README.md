@@ -11,6 +11,7 @@ results = query "4tka-6guv" do
   |> order("region") 
   |> limit(5)
   |> offset(5)
+end
 
 #result might look like:
 {:ok, [
