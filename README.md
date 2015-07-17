@@ -5,6 +5,8 @@
 ```elixir
 
 #Get some earthquakes
+import Exquery.Reader
+
 results = query "4tka-6guv" do
   select([:region, :magnitude]) 
   |> where("magnitude > 4.0")
