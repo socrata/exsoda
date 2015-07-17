@@ -1,6 +1,6 @@
-defmodule ExsodaTest do
+defmodule ExsodaTest.Reader do
   use ExUnit.Case
-  import Exsoda
+  import Exsoda.Reader
 
 
   test "can make a selection" do
@@ -103,7 +103,7 @@ defmodule ExsodaTest do
   #This is a shitty test
   @tag timeout: 10_000
   test "can actually make a query" do
-    results = query "4tka-6guv" do
+    results = read "4tka-6guv" do
       select([:region, :magnitude]) 
       |> where("magnitude > 4.0")
       |> order("region") 
@@ -122,7 +122,7 @@ defmodule ExsodaTest do
 
   @tag timeout: 10_000
   test "can query with alt credentials not set via config" do
-    {:error, {status, body}} = query "4tka-6guv", domain: "google.com", account: "nope", password: "hunter2" do
+    {:error, {status, _body}} = read "4tka-6guv", domain: "google.com", account: "nope", password: "hunter2" do
       select([:region, :magnitude]) 
       |> where("magnitude > 4.0")
       |> order("region") 
