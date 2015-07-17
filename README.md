@@ -1,4 +1,4 @@
-# exsoda
+# exsoda [![Build Status](https://travis-ci.org/rozap/exsoda.svg?branch=master)](https://travis-ci.org/rozap/exsoda)
 
 
 ## usage
