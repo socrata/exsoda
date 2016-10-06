@@ -129,7 +129,7 @@ defmodule ExsodaTest.Reader do
 
   @tag timeout: 10_000
   test "can query with alt credentials not set via config" do
-    {:error, {status, _body}} = read "4tka-6guv", domain: "google.com", account: "nope", password: "hunter2" do
+    {:error, response} = read "4tka-6guv", domain: "google.com", account: "nope", password: "hunter2" do
       select([:region, :magnitude])
       |> where("magnitude > 4.0")
       |> order("region")
@@ -137,6 +137,6 @@ defmodule ExsodaTest.Reader do
       |> offset(5)
     end
 
-    assert status == 404
+    assert response.status_code == 404
   end
 end

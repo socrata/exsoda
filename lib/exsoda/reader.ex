@@ -14,16 +14,22 @@ defmodule Exsoda.Reader do
   end
 
   defp conf_fallback(options, key) do
-    Keyword.get(options, key, Application.get_env(:soda, key))
+    Keyword.get(options, key, Application.get_env(:exsoda, key))
   end
 
-  defp get_columns(domain, resource) do
-    result = "https://#{domain}/api/views/#{resource}.json"
-    |> HTTPoison.get()
+  defp basic_auth(options) do
+    account = conf_fallback(options, :account)
+    password = conf_fallback(options, :password)
 
-    with {:ok, %Response{body: body}} <- result,
-      {:ok, decoded} <- Poison.decode(body) do
+    if account && password do
+      [basic_auth: {account, password}]
+    else
+      []
+    end
+  end
 
+  defp response_to_columns(body) do
+    with {:ok, decoded} <- Poison.decode(body) do
       columns = decoded
       |> Map.get("columns", [])
       |> Enum.map(fn column ->
@@ -35,19 +41,30 @@ defmodule Exsoda.Reader do
     end
   end
 
+  defp get_columns(domain, resource, hackney_opts) do
+    result =  HTTPoison.get("https://#{domain}/api/views/#{resource}.json", %{}, hackney: hackney_opts)
+    case result do
+      {:ok, %Response{body: body, status_code: 200}} ->
+        response_to_columns(body)
+      {:ok, non_200} ->
+        {:error, non_200}
+      error ->
+        error
+    end
+  end
+
   def get(resource, soql, options) do
     domain = conf_fallback(options, :domain)
-    # account = conf_fallback(options, :account)
-    # password = conf_fallback(options, :password)
 
-    with {:ok, columns} <- get_columns(domain, resource) do
+    hackney_opts = basic_auth(options)
+
+    with {:ok, columns} <- get_columns(domain, resource, hackney_opts) do
 
       query = URI.encode_query(soql)
 
       stream = "https://#{domain}/api/resource/#{resource}.csv?#{query}"
-      |> IO.inspect
-      |> HTTPoison.get(%{}, stream_to: self)
-      |> as_stream
+      |> HTTPoison.get(%{}, stream_to: self, hackney: hackney_opts)
+      |> as_line_stream
       |> CSV.parse_stream(headers: false)
       |> Stream.transform(nil,
         fn
@@ -66,10 +83,9 @@ defmodule Exsoda.Reader do
 
       {:ok, stream}
     end
-
   end
 
-  defp as_stream({:ok, %AsyncResponse{id: ref}}) do
+  defp as_line_stream({:ok, %AsyncResponse{id: ref}}) do
     Stream.resource(
       fn -> :ok end,
       fn state ->
@@ -91,7 +107,7 @@ defmodule Exsoda.Reader do
     )
   end
 
-  defp as_stream(failure), do: failure
+  defp as_line_stream(failure), do: failure
 
 
 
