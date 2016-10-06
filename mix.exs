@@ -3,11 +3,24 @@ defmodule Exsoda.Mixfile do
 
   def project do
     [app: :exsoda,
-     version: "1.0.0",
+     version: "1.0.1",
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps]
+     deps: deps,
+     package: package(),
+     description: """
+      A Socrata Soda2 API wrapper
+     """
+   ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      maintainers: ["Chris Duranti"],
+      links: %{github: "https://github.com/rozap/exsoda"}
+    ]
   end
 
   # Configuration for the OTP application
@@ -30,7 +43,8 @@ defmodule Exsoda.Mixfile do
     [
       {:httpoison, "~> 0.9.2"},
       {:poison, "~> 1.4.0"},
-      {:nimble_csv, "~> 0.1.0"}
+      {:nimble_csv, "~> 0.1.0"},
+      {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
 end

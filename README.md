@@ -20,7 +20,9 @@ iex(8)> with {:ok, stream} <- query("4tka-6guv", domain: "soda.demo.socrata.com"
 
 ## Or elsewhere
 
-result = query("4tka-6guv", ) |> select([:region, :magnitude]) |> where("magnitude > 4.0")
+result = query("4tka-6guv", )
+|> select([:region, :magnitude])
+|> where("magnitude > 4.0")
 |> order("region")
 |> limit(10)
 |> offset(5)
