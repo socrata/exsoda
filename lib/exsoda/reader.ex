@@ -11,7 +11,7 @@ defmodule Exsoda.Reader do
     Keyword.get(options, key, Application.get_env(:exsoda, key))
   end
 
-  defp basic_auth(%Query{account: account, password: password} = q) do
+  defp basic_auth(%Query{account: account, password: password}) do
     if account && password do
       [basic_auth: {account, password}]
     else
@@ -113,7 +113,7 @@ defmodule Exsoda.Reader do
 
 
 
-  @operations [:where, :order, :limit, :offset, :group, :q]
+  @operations [:where, :limit, :offset, :group, :q]
 
   defp put_q(%Query{} = state, name, value) do
     query = Map.put(state.query, name, value)
@@ -132,12 +132,11 @@ defmodule Exsoda.Reader do
 
 
   Enum.each(@operations, fn param ->
-    def unquote(param)(state, expr, opts \\ []) do
+    def unquote(param)(state, expr) do
       put_q(state, "$" <> Atom.to_string(unquote(param)), expr)
     end
   end)
 
-  def select(state, :all), do: %{}
   def select(state, columns) do
     put_q(state, "$select", Enum.join(columns, ", "))
   end
