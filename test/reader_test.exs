@@ -3,113 +3,146 @@ defmodule ExsodaTest.Reader do
   import Exsoda.Reader
 
 
+  defp expected_state(query) do
+    %Exsoda.Reader.Query{
+      account: nil,
+      domain: "soda.demo.socrata.com",
+      fourfour: "four-four", password: nil,
+      query: query}
+  end
+
   test "can make a selection" do
-    assert select([:region, :magnitude]) == %{
-      "$select" => "region, magnitude"
-    }
+    result = query("four-four")
+    |> select([:region, :magnitude])
+
+    assert result == expected_state(%{"$select" => "region, magnitude"})
   end
 
   test "can make a where" do
-    assert select([:region, :magnitude])
-    |> where("magnitude > 4.0") == %{
+    result = query("four-four")
+    |> select([:region, :magnitude])
+    |> where("magnitude > 4.0")
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$where" => "magnitude > 4.0"
-    }
+    })
   end
 
   test "can make an order" do
-    assert select([:region, :magnitude])
+    result = query("four-four")
+    |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
-    |> order("region") == %{
+    |> order("region")
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$where" => "magnitude > 4.0",
       "$order" => "region"
-    }
+    })
   end
 
   test "can make an ascending order" do
-    assert select([:region, :magnitude])
+    result = query("four-four")
+    |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
-    |> order("region", direction: :asc) == %{
+    |> order("region", :asc)
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$where" => "magnitude > 4.0",
       "$order" => "region ASC"
-    }
+    })
   end
 
   test "can make a descending order" do
-    assert select([:region, :magnitude])
+    result = query("four-four")
+    |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
-    |> order("region", direction: :desc) == %{
+    |> order("region", :desc)
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$where" => "magnitude > 4.0",
       "$order" => "region DESC"
-    }
+    })
   end
 
 
   test "can make an limit" do
-    assert select([:region, :magnitude])
+    result = query("four-four")
+    |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
     |> order("region")
-    |> limit(5) == %{
+    |> limit(5)
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$where" => "magnitude > 4.0",
       "$order" => "region",
       "$limit" => 5
-    }
+    })
   end
 
   test "can make an offset" do
-    assert select([:region, :magnitude])
+    result = query("four-four")
+    |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
     |> order("region")
     |> limit(5)
-    |> offset(5) == %{
+    |> offset(5)
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$where" => "magnitude > 4.0",
       "$order" => "region",
       "$limit" => 5,
       "$offset" => 5
-    }
+    })
   end
 
 
   test "can make an group" do
-    assert select([:region, :magnitude])
+    result = query("four-four")
+    |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
     |> order("region")
     |> offset(5)
     |> limit(5)
-    |> group("foo") == %{
+    |> group("foo")
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$where" => "magnitude > 4.0",
       "$order" => "region",
       "$limit" => 5,
       "$offset" => 5,
       "$group" => "foo"
-    }
+    })
   end
 
   test "can make a fulltext query" do
-    assert select([:region, :magnitude])
-    |> q("foobar") == %{
+    result = query("four-four")
+    |> select([:region, :magnitude])
+    |> q("foobar")
+
+    assert result == expected_state(%{
       "$select" => "region, magnitude",
       "$q" => "foobar"
-    }
+    })
   end
 
 
-  #This is a shitty test
+  # #This is a shitty test
   @tag timeout: 10_000
   test "can actually make a query" do
-    {:ok, stream} = read "4tka-6guv" do
-      select([:region, :magnitude])
-      |> where("magnitude > 4.0")
-      |> order("region")
-      |> limit(10)
-      |> offset(5)
-    end
+    {:ok, stream} = query("4tka-6guv")
+    |> select([:region, :magnitude])
+    |> where("magnitude > 4.0")
+    |> order("region")
+    |> limit(10)
+    |> offset(5)
+    |> run
 
     result = Enum.into(stream, [])
 
@@ -129,13 +162,13 @@ defmodule ExsodaTest.Reader do
 
   @tag timeout: 10_000
   test "can query with alt credentials not set via config" do
-    {:error, response} = read "4tka-6guv", domain: "google.com", account: "nope", password: "hunter2" do
-      select([:region, :magnitude])
-      |> where("magnitude > 4.0")
-      |> order("region")
-      |> limit(5)
-      |> offset(5)
-    end
+    {:error, response} = query("4tka-6guv", domain: "google.com", account: "nope", password: "hunter2")
+    |> select([:region, :magnitude])
+    |> where("magnitude > 4.0")
+    |> order("region")
+    |> limit(5)
+    |> offset(5)
+    |> run
 
     assert response.status_code == 404
   end

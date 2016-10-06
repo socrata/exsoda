@@ -3,24 +3,15 @@ defmodule Exsoda.Reader do
   alias HTTPoison.{AsyncResponse, Response, AsyncStatus, AsyncHeaders, AsyncChunk, AsyncEnd}
   alias NimbleCSV.RFC4180, as: CSV
 
-  @operations [:where, :order, :limit, :offset, :group, :q]
-
-  defp to_response(%HTTPoison.Response{status_code: status} = response) do
-    case response.body |> Poison.decode do
-      {:ok, _} = js when status < 300 -> js
-      {:ok, parsed} -> {:error, {status, parsed}}
-      {:error, _reason} -> {:error, {status, response.body}}
-    end
+  defmodule Query do
+    defstruct fourfour: nil, domain: nil, account: nil, password: nil, query: %{}
   end
 
   defp conf_fallback(options, key) do
     Keyword.get(options, key, Application.get_env(:exsoda, key))
   end
 
-  defp basic_auth(options) do
-    account = conf_fallback(options, :account)
-    password = conf_fallback(options, :password)
-
+  defp basic_auth(%Query{account: account, password: password} = q) do
     if account && password do
       [basic_auth: {account, password}]
     else
@@ -53,16 +44,27 @@ defmodule Exsoda.Reader do
     end
   end
 
-  def get(resource, soql, options) do
-    domain = conf_fallback(options, :domain)
+  def query(fourfour, options \\ []) do
+    %Query{
+      fourfour: fourfour,
+      domain: conf_fallback(options, :domain),
+      account: conf_fallback(options, :account),
+      password: conf_fallback(options, :password),
 
-    hackney_opts = basic_auth(options)
+      query: %{}
+    }
+  end
 
-    with {:ok, columns} <- get_columns(domain, resource, hackney_opts) do
+  def run(%Query{} = state) do
 
-      query = URI.encode_query(soql)
+    domain = state.domain || Application.get_env(:exsoda, :domain)
+    hackney_opts = basic_auth(state)
 
-      stream = "https://#{domain}/api/resource/#{resource}.csv?#{query}"
+    with {:ok, columns} <- get_columns(domain, state.fourfour, hackney_opts) do
+
+      query = URI.encode_query(state.query)
+
+      stream = "https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}"
       |> HTTPoison.get(%{}, stream_to: self, hackney: hackney_opts)
       |> as_line_stream
       |> CSV.parse_stream(headers: false)
@@ -111,23 +113,32 @@ defmodule Exsoda.Reader do
 
 
 
-  Enum.each(@operations, fn param ->
-    def unquote(param)(query, column, opts \\ []), do: Enum.into(query, unquote(String.to_atom("#{param}_todict"))(column, opts))
-    defp unquote(String.to_atom("#{param}_todict"))(column, []), do: %{unquote("$#{Atom.to_string(param)}") => column}
-  end)
+  @operations [:where, :order, :limit, :offset, :group, :q]
 
-  defp order_todict(column, direction: :asc), do: order_todict("#{column} ASC", [])
-  defp order_todict(column, direction: :desc), do: order_todict("#{column} DESC", [])
-
-  def select(:all), do: %{}
-  def select(columns) do
-    %{"$select" => Enum.join(columns, ", ")}
+  defp put_q(%Query{} = state, name, value) do
+    query = Map.put(state.query, name, value)
+    struct(state, query: query)
   end
 
-  defmacro read(resource, options \\ [], body) do
-    quote do
-      soql = unquote(body[:do])
-      Exsoda.Reader.get(unquote(resource), soql, unquote(options))
+  def order(state, expr , :asc) do
+    order(state, expr <> " ASC")
+  end
+  def order(state, expr , :desc) do
+    order(state, expr <> " DESC")
+  end
+  def order(state, expr) do
+    put_q(state, "$order", expr)
+  end
+
+
+  Enum.each(@operations, fn param ->
+    def unquote(param)(state, expr, opts \\ []) do
+      put_q(state, "$" <> Atom.to_string(unquote(param)), expr)
     end
+  end)
+
+  def select(state, :all), do: %{}
+  def select(state, columns) do
+    put_q(state, "$select", Enum.join(columns, ", "))
   end
 end
