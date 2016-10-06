@@ -24,12 +24,12 @@ result = query("4tka-6guv", )
 |> select([:region, :magnitude])
 |> where("magnitude > 4.0")
 |> order("region")
-|> limit(10)
 |> offset(5)
 |> run
 
 with {:ok, row_stream} <- result do
-  Stream.map(row_stream, fn row ->
+  Enum.take(row_stream, 10)
+  |> Enum.map(fn row ->
     IO.inspect row
   end)
 end
