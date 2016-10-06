@@ -3,8 +3,8 @@ defmodule Exsoda.Mixfile do
 
   def project do
     [app: :exsoda,
-     version: "0.0.1",
-     elixir: "~> 1.0",
+     version: "1.0.",
+     elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -14,7 +14,7 @@ defmodule Exsoda.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :httpotion]]
+    [applications: [:logger, :httpoison, :poison]]
   end
 
   # Dependencies can be Hex packages:
@@ -28,9 +28,9 @@ defmodule Exsoda.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:ibrowse, github: "cmullaparthi/ibrowse", tag: "v4.1.1"},
-      {:httpotion, "~> 2.0.0"},
-      {:poison, "~> 1.4.0"}
+      {:httpoison, "~> 0.9.2"},
+      {:poison, "~> 1.4.0"},
+      {:nimble_csv, "~> 0.1.0"}
     ]
   end
 end
