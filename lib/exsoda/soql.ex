@@ -9,7 +9,7 @@ defmodule Exsoda.Soql do
 
   def from_string("text", text), do: text
 
-  def from_string(type, value) do
-    {:error, "from_string/2 :: Cannot convert #{value} to #{type}"}
+  def from_string(_, value) do
+    value
   end
 end

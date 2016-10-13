@@ -20,28 +20,33 @@ defmodule Exsoda.Reader do
     end
   end
 
-  defp response_to_columns(body) do
-    with {:ok, decoded} <- Poison.decode(body) do
-      columns = decoded
-      |> Map.get("columns", [])
-      |> Enum.map(fn column ->
-        {column["name"], column["dataTypeName"]}
-      end)
-      |> Enum.into(%{})
+  defp view_columns(decoded) do
+    columns = decoded
+    |> Map.get("columns", [])
+    |> Enum.map(fn column ->
+      {column["name"], column["dataTypeName"]}
+    end)
+    |> Enum.into(%{})
 
-      {:ok, columns}
-    end
+    {:ok, columns}
   end
 
-  defp get_columns(domain, resource, hackney_opts) do
-    result =  HTTPoison.get("https://#{domain}/api/views/#{resource}.json", %{}, hackney: hackney_opts)
+  def get_view(%Query{domain: domain, fourfour: fourfour} = state) do
+    hackney_opts = basic_auth(state)
+    result =  HTTPoison.get("https://#{domain}/api/views/#{fourfour}.json", %{}, hackney: hackney_opts)
     case result do
       {:ok, %Response{body: body, status_code: 200}} ->
-        response_to_columns(body)
+        Poison.decode(body)
       {:ok, non_200} ->
         {:error, non_200}
       error ->
         error
+    end
+  end
+
+  defp get_columns(query) do
+    with {:ok, view} <- get_view(query) do
+      view_columns(view)
     end
   end
 
@@ -61,7 +66,7 @@ defmodule Exsoda.Reader do
     domain = state.domain || Application.get_env(:exsoda, :domain)
     hackney_opts = basic_auth(state)
 
-    with {:ok, columns} <- get_columns(domain, state.fourfour, hackney_opts) do
+    with {:ok, columns} <- get_columns(state) do
 
       query = URI.encode_query(state.query)
 
@@ -113,8 +118,6 @@ defmodule Exsoda.Reader do
   end
 
   defp as_line_stream(failure), do: failure
-
-
 
   @operations [:where, :limit, :offset, :group, :q]
 
