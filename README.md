@@ -48,3 +48,14 @@ end
 
 
 ```
+
+## Get a view
+```
+iex(1)> import Exsoda.Reader
+
+iex(2)> query("hcnj-rei3", domain: "data.austintexas.gov") |> get_view
+
+{:ok,
+ %{"oid" => 12724312, "displayType" => "table",
+   "publicationAppendEnabled" => false, ...}}
+```
