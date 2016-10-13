@@ -2,6 +2,7 @@ defmodule Exsoda.Reader do
   alias Exsoda.Soql
   alias HTTPoison.{AsyncResponse, Response, AsyncStatus, AsyncHeaders, AsyncChunk, AsyncEnd}
   alias NimbleCSV.RFC4180, as: CSV
+  require Logger
 
   defmodule Query do
     defstruct fourfour: nil, domain: nil, account: nil, password: nil, query: %{}
@@ -63,6 +64,8 @@ defmodule Exsoda.Reader do
     with {:ok, columns} <- get_columns(domain, state.fourfour, hackney_opts) do
 
       query = URI.encode_query(state.query)
+
+      Logger.debug("Exsoda Query #{query} https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}")
 
       stream = "https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}"
       |> HTTPoison.get(%{}, stream_to: self, hackney: hackney_opts)
