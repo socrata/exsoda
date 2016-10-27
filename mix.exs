@@ -3,7 +3,7 @@ defmodule Exsoda.Mixfile do
 
   def project do
     [app: :exsoda,
-     version: "1.1.2",
+     version: "1.1.3",
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -42,7 +42,7 @@ defmodule Exsoda.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 0.9.2"},
-      {:poison, "~> 1.4.0"},
+      {:poison, "~> 2.2.0"},
       {:nimble_csv, "~> 0.1.0"},
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
