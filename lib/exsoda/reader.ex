@@ -1,46 +1,39 @@
 defmodule Exsoda.Reader do
-  alias Exsoda.Soql
+  alias Exsoda.{Soql, Http}
   alias HTTPoison.{AsyncResponse, Response, AsyncStatus, AsyncHeaders, AsyncChunk, AsyncEnd}
   alias NimbleCSV.RFC4180, as: CSV
   require Logger
 
   defmodule Query do
-    defstruct fourfour: nil, domain: nil, account: nil, password: nil, query: %{}
+    defstruct fourfour: nil, domain: nil, account: nil, password: nil, host: nil, query: %{}
   end
 
-  defp conf_fallback(options, key) do
-    Keyword.get(options, key, Application.get_env(:exsoda, key))
-  end
+  def query(fourfour, options \\ []) do
+    %Query{
+      fourfour: fourfour,
+      domain: Http.conf_fallback(options, :domain),
+      account: Http.conf_fallback(options, :account),
+      password: Http.conf_fallback(options, :password),
+      host:     Http.conf_fallback(options, :host),
 
-  defp basic_auth(%Query{account: account, password: password}) do
-    if account && password do
-      [basic_auth: {account, password}]
-    else
-      []
-    end
+      query: %{}
+    }
   end
 
   defp view_columns(decoded) do
     columns = decoded
     |> Map.get("columns", [])
-    |> Enum.map(fn column ->
-      {column["name"], column["dataTypeName"]}
-    end)
+    |> Enum.map(fn column -> {column["name"], column["dataTypeName"]} end)
     |> Enum.into(%{})
 
     {:ok, columns}
   end
 
   def get_view(%Query{domain: domain, fourfour: fourfour} = state) do
-    hackney_opts = basic_auth(state)
-    result =  HTTPoison.get("https://#{domain}/api/views/#{fourfour}.json", %{}, hackney: hackney_opts)
-    case result do
-      {:ok, %Response{body: body, status_code: 200}} ->
-        Poison.decode(body)
-      {:ok, non_200} ->
-        {:error, non_200}
-      error ->
-        error
+    with {:ok, base_url} <- Http.base_url(state) do
+      "https://#{domain}/api/views/#{fourfour}.json"
+      |> HTTPoison.get(%{}, Http.opts(state))
+      |> Http.as_json
     end
   end
 
@@ -50,30 +43,17 @@ defmodule Exsoda.Reader do
     end
   end
 
-  def query(fourfour, options \\ []) do
-    %Query{
-      fourfour: fourfour,
-      domain: conf_fallback(options, :domain),
-      account: conf_fallback(options, :account),
-      password: conf_fallback(options, :password),
-
-      query: %{}
-    }
-  end
-
   def run(%Query{} = state) do
-
     domain = state.domain || Application.get_env(:exsoda, :domain)
-    hackney_opts = basic_auth(state)
 
-    with {:ok, columns} <- get_columns(state) do
+    with {:ok, columns} <- get_columns(state),
+      {:ok, base} <- Http.base_url(state) do
 
       query = URI.encode_query(state.query)
 
       Logger.debug("Exsoda Query #{query} https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}")
-
-      stream = "https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}"
-      |> HTTPoison.get(%{}, stream_to: self, hackney: hackney_opts)
+      stream = "#{base}/resource/#{state.fourfour}.csv?#{query}"
+      |> HTTPoison.get(%{}, [{:stream_to, self} | Http.opts(state)])
       |> as_line_stream
       |> CSV.parse_stream(headers: false)
       |> Stream.transform(nil,
