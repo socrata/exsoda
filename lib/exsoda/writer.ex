@@ -10,7 +10,7 @@ defmodule Exsoda.Writer do
       view: %View{}
   end
 
-  def create(%Write{domain: domain} = w) do
+  def create(%Write{} = w) do
     with {:ok, json} <- Poison.encode(w.view),
       {:ok, base} <- Http.base_url(w) do
       HTTPoison.post(
@@ -36,7 +36,7 @@ defmodule Exsoda.Writer do
   def update(%Write{fourfour: nil}) do
     {:error, "Cannot update view with nil fourfour"}
   end
-  def update(%Write{domain: domain, fourfour: fourfour} = w) do
+  def update(%Write{fourfour: fourfour} = w) do
     with {:ok, json} <- Poison.encode(w.view),
       {:ok, base} <- Http.base_url(w) do
       HTTPoison.put(
