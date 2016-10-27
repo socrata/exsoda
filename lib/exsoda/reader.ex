@@ -1,6 +1,6 @@
 defmodule Exsoda.Reader do
   alias Exsoda.{Soql, Http}
-  alias HTTPoison.{AsyncResponse, Response, AsyncStatus, AsyncHeaders, AsyncChunk, AsyncEnd}
+  alias HTTPoison.{AsyncResponse, AsyncStatus, AsyncHeaders, AsyncChunk, AsyncEnd}
   alias NimbleCSV.RFC4180, as: CSV
   require Logger
 
@@ -29,9 +29,9 @@ defmodule Exsoda.Reader do
     {:ok, columns}
   end
 
-  def get_view(%Query{domain: domain, fourfour: fourfour} = state) do
-    with {:ok, base_url} <- Http.base_url(state) do
-      "https://#{domain}/api/views/#{fourfour}.json"
+  def get_view(%Query{fourfour: fourfour} = state) do
+    with {:ok, base} <- Http.base_url(state) do
+      "#{base}/views/#{fourfour}.json"
       |> HTTPoison.get(%{}, Http.opts(state))
       |> Http.as_json
     end
