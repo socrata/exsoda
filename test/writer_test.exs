@@ -88,7 +88,10 @@ defmodule ExsodaTest.Writer do
     |> Writer.run
 
     results = Writer.write()
-    |> Writer.upsert(fourfour, [%{text_column: "a text value"}])
+    |> Writer.upsert(
+      fourfour,
+      [%{text_column: "a text value"}, %{text_column: "a second text value"}]
+    )
     |> Writer.run
 
     assert [{:ok, _}] = results
@@ -96,7 +99,7 @@ defmodule ExsodaTest.Writer do
     {:ok, rows_stream} = Reader.query(fourfour)
     |> Reader.run
 
-    assert Enum.into(rows_stream, []) == [[{"text column", "a text value"}]]
+    assert Enum.into(rows_stream, []) == [[{"text column", "a text value"}], [{"text column", "a second text value"}]]
   end
 
 end
