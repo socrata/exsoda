@@ -1,5 +1,5 @@
 defmodule ExsodaTest.Reader do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Exsoda.Reader
 
 
@@ -7,7 +7,7 @@ defmodule ExsodaTest.Reader do
     %Exsoda.Reader.Query{
       account: Application.get_env(:exsoda, :account),
       password: Application.get_env(:exsoda, :password),
-      domain: "soda.demo.socrata.com",
+      domain: "cheetah.test-socrata.com",
       fourfour: "four-four",
       query: query}
   end
@@ -137,7 +137,7 @@ defmodule ExsodaTest.Reader do
 
   @tag timeout: 10_000
   test "can actually make a query" do
-    {:ok, stream} = query("4tka-6guv")
+    {:ok, stream} = query("upuy-x277")
     |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
     |> order("region")
@@ -163,7 +163,7 @@ defmodule ExsodaTest.Reader do
 
   @tag timeout: 10_000
   test "can query with alt credentials not set via config" do
-    {:error, response} = query("4tka-6guv", domain: "google.com", account: "nope", password: "hunter2")
+    {:error, response} = query("upuy-x277", domain: "google.com", account: "nope", password: "hunter2")
     |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
     |> order("region")
@@ -177,10 +177,10 @@ defmodule ExsodaTest.Reader do
 
   @tag timeout: 10_000
   test "can get a view" do
-    {:ok, view} = query("4tka-6guv")
+    {:ok, view} = query("upuy-x277")
     |> get_view
 
-    assert view["id"] == "4tka-6guv"
+    assert view["id"] == "upuy-x277"
   end
 
 

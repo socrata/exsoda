@@ -1,50 +1,105 @@
 defmodule Exsoda.Writer do
-  alias Exsoda.{Http, View}
+  alias Exsoda.Http
+
+  defmodule CreateColumn do
+    defstruct name: nil,
+    dataTypeName: nil,
+    fourfour: nil,
+    properties: %{} # description, fieldName
+  end
+
+  defmodule CreateView do
+    defstruct name: nil,
+    properties: %{}
+  end
+
+  defmodule Upsert do
+    defstruct fourfour: nil,
+    rows: []
+  end
+
 
   defmodule Write do
-    defstruct fourfour: nil,
-      domain: nil,
+    defstruct domain: nil,
+      host: nil,
       account: nil,
       password: nil,
-      host: nil,
-      view: %View{}
+      operations: []
   end
 
-  def create(%Write{} = w) do
-    with {:ok, json} <- Poison.encode(w.view),
-      {:ok, base} <- Http.base_url(w) do
-      HTTPoison.post(
-        "#{base}/views.json",
-        json,
-        Http.headers(w),
-        Http.opts(w)
-      ) |> Http.as_json
-    end
-  end
-
-  def create(view, options \\ []) do
-    create(%Write{
+  def write(options \\ []) do
+    %Write{
       domain:   Http.conf_fallback(options, :domain),
       account:  Http.conf_fallback(options, :account),
       password: Http.conf_fallback(options, :password),
-      host:     Http.conf_fallback(options, :host),
-
-      view: view
-    })
+      host:     Http.conf_fallback(options, :host)
+    }
   end
 
-  def update(%Write{fourfour: nil}) do
-    {:error, "Cannot update view with nil fourfour"}
+  def create(%Write{} = w, name, properties) do
+    operation = %CreateView{name: name, properties: properties}
+    %{ w | operations: [operation | w.operations] }
   end
-  def update(%Write{fourfour: fourfour} = w) do
-    with {:ok, json} <- Poison.encode(w.view),
-      {:ok, base} <- Http.base_url(w) do
-      HTTPoison.put(
-        "#{base}/views/#{fourfour}.json",
+
+  def create_column(%Write{} = w, fourfour, name, type, properties) do
+    operation = %CreateColumn{name: name, dataTypeName: type, fourfour: fourfour, properties: properties}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  # a row looks like: {fieldName: value, fieldName: value}
+  def upsert(%Write{} = w, fourfour, rows) do
+    operation = %Upsert{fourfour: fourfour, rows: rows}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  defp do_run(%CreateView{} = cv, w) do
+    data = Map.merge(cv.properties, %{name: cv.name})
+    post("/views.json", w, data)
+  end
+
+  defp do_run(%CreateColumn{} = cc, w) do
+    data = Map.take(cc, [:dataTypeName, :name])
+    |> Map.merge(cc.properties)
+    post("/views/#{cc.fourfour}/columns", w, data)
+  end
+
+  defp do_run(%Upsert{} = u, w) do
+    post("/resource/#{u.fourfour}.json", w, u.rows)
+  end
+
+  def run(%Write{} = w) do
+    Enum.reduce_while(Enum.reverse(w.operations), [], fn op, acc ->
+        case do_run(op, w) do
+          {:error, _} = err -> {:halt, [err | acc]}
+          {:ok, _} = ok     -> {:cont, [ok  | acc]}
+        end
+    end)
+    |> Enum.reverse
+  end
+
+
+  defp post(path, write, data) do
+    with {:ok, json} <- Poison.encode(data),
+      {:ok, base} <- Http.base_url(write) do
+      HTTPoison.post(
+        "#{base}#{path}",
         json,
-        Http.headers(w),
-        Http.opts(w)
+        Http.headers(write),
+        Http.opts(write)
       ) |> Http.as_json
     end
   end
+
+  defp put(path, write, data) do
+    with {:ok, json} <- Poison.encode(data),
+      {:ok, base} <- Http.base_url(write) do
+      HTTPoison.put(
+        "#{base}#{path}",
+        json,
+        Http.headers(write),
+        Http.opts(write)
+      ) |> Http.as_json
+    end
+  end
+
 end
