@@ -13,6 +13,12 @@ defmodule Exsoda.Writer do
     properties: %{}
   end
 
+  defmodule Upsert do
+    defstruct fourfour: nil,
+    rows: []
+  end
+
+
   defmodule Write do
     defstruct domain: nil,
       host: nil,
@@ -40,6 +46,12 @@ defmodule Exsoda.Writer do
     %{ w | operations: [operation | w.operations] }
   end
 
+  # a row looks like: {fieldName: value, fieldName: value}
+  def upsert(%Write{} = w, fourfour, rows) do
+    operation = %Upsert{fourfour: fourfour, rows: rows}
+    %{ w | operations: [operation | w.operations] }
+  end
+
   defp do_run(%CreateView{} = cv, w) do
     data = Map.merge(cv.properties, %{name: cv.name})
     post("/views.json", w, data)
@@ -51,8 +63,12 @@ defmodule Exsoda.Writer do
     post("/views/#{cc.fourfour}/columns", w, data)
   end
 
+  defp do_run(%Upsert{} = u, w) do
+    post("/resource/#{u.fourfour}.json", w, u.rows)
+  end
+
   def run(%Write{} = w) do
-    Enum.reduce_while(w.operations, [], fn op, acc ->
+    Enum.reduce_while(Enum.reverse(w.operations), [], fn op, acc ->
         case do_run(op, w) do
           {:error, _} = err -> {:halt, [err | acc]}
           {:ok, _} = ok     -> {:cont, [ok  | acc]}

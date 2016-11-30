@@ -1,5 +1,5 @@
 defmodule ExsodaTest.Reader do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Exsoda.Reader
 
 
