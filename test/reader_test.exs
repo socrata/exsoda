@@ -174,6 +174,19 @@ defmodule ExsodaTest.Reader do
     assert response.status_code == 404
   end
 
+  @tag timeout: 10_000
+  test "can query with host from environment variables" do
+    {:error, response} = query("upuy-x277", host: {:system, "FOOFOO", "blah"})
+    |> select([:region, :magnitude])
+    |> where("magnitude > 4.0")
+    |> order("region")
+    |> limit(5)
+    |> offset(5)
+    |> run
+
+    assert %HTTPoison.Error{reason: :nxdomain} = response
+  end
+
 
   @tag timeout: 10_000
   test "can get a view" do

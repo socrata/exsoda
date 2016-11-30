@@ -14,6 +14,11 @@ defmodule Exsoda.Http do
     {:ok, make_url(Map.get(opts, :domain))}
   end
 
+  def base_url(%{host: {:system, env_var, default}}) do
+    host_str = System.get_env(env_var) || default
+    {:ok, make_url(host_str)}
+  end
+
   def base_url(%{host: host}) when is_function(host, 0) do
     with {:ok, host_str} <- host.() do
       {:ok, make_url(host_str)}

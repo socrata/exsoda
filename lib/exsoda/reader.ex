@@ -51,7 +51,7 @@ defmodule Exsoda.Reader do
 
       query = URI.encode_query(state.query)
 
-      Logger.debug("Exsoda Query #{query} https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}")
+      Logger.debug("Exsoda Query https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}")
       stream = "#{base}/resource/#{state.fourfour}.csv?#{query}"
       |> HTTPoison.get(%{}, [{:stream_to, self} | Http.opts(state)])
       |> as_line_stream
