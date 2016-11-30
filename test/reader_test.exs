@@ -5,9 +5,10 @@ defmodule ExsodaTest.Reader do
 
   defp expected_state(query) do
     %Exsoda.Reader.Query{
-      account: nil,
+      account: Application.get_env(:exsoda, :account),
+      password: Application.get_env(:exsoda, :password),
       domain: "soda.demo.socrata.com",
-      fourfour: "four-four", password: nil,
+      fourfour: "four-four",
       query: query}
   end
 
@@ -132,8 +133,8 @@ defmodule ExsodaTest.Reader do
     })
   end
 
+  # ¯\_(ツ)_/¯  These tests actually make http requests ¯\_(ツ)_/¯
 
-  # #This is a shitty test
   @tag timeout: 10_000
   test "can actually make a query" do
     {:ok, stream} = query("4tka-6guv")
@@ -172,4 +173,15 @@ defmodule ExsodaTest.Reader do
 
     assert response.status_code == 404
   end
+
+
+  @tag timeout: 10_000
+  test "can get a view" do
+    {:ok, view} = query("4tka-6guv")
+    |> get_view
+
+    assert view["id"] == "4tka-6guv"
+  end
+
+
 end

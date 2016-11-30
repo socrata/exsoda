@@ -47,5 +47,4 @@ defmodule Exsoda.Writer do
       ) |> Http.as_json
     end
   end
-
 end
