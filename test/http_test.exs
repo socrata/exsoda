@@ -3,17 +3,17 @@ defmodule ExsodaTest.Http do
   alias Exsoda.Http
 
   test "can make a base url" do
-    actual = Http.base_url(%{host: nil, domain: "foo"})
+    actual = Http.base_url(%{opts: %{domain: "foo"}})
     assert actual == {:ok, "https://foo/api"}
   end
 
   test "can make a base url with explicit host" do
-    actual = Http.base_url(%{host: "foo"})
+    actual = Http.base_url(%{opts: %{host: "foo"}})
     assert actual == {:ok, "https://foo/api"}
   end
 
   test "can make a base url with function as host" do
-    actual = Http.base_url(%{host: fn -> {:ok, "foo"} end})
+    actual = Http.base_url(%{opts: %{host: fn -> {:ok, "foo"} end}})
     assert actual == {:ok, "https://foo/api"}
   end
 

@@ -5,17 +5,15 @@ defmodule Exsoda.Reader do
   require Logger
 
   defmodule Query do
-    defstruct fourfour: nil, domain: nil, account: nil, password: nil, host: nil, query: %{}
+    defstruct fourfour: nil,
+      opts: [],
+      query: %{}
   end
 
   def query(fourfour, options \\ []) do
     %Query{
       fourfour: fourfour,
-      domain: Http.conf_fallback(options, :domain),
-      account: Http.conf_fallback(options, :account),
-      password: Http.conf_fallback(options, :password),
-      host:     Http.conf_fallback(options, :host),
-
+      opts: Http.options(options),
       query: %{}
     }
   end
@@ -32,7 +30,7 @@ defmodule Exsoda.Reader do
   def get_view(%Query{fourfour: fourfour} = state) do
     with {:ok, base} <- Http.base_url(state) do
       "#{base}/views/#{fourfour}.json"
-      |> HTTPoison.get(%{}, Http.opts(state))
+      |> HTTPoison.get(Http.headers(state), Http.opts(state))
       |> Http.as_json
     end
   end
@@ -44,16 +42,13 @@ defmodule Exsoda.Reader do
   end
 
   def run(%Query{} = state) do
-    domain = state.domain || Application.get_env(:exsoda, :domain)
-
     with {:ok, columns} <- get_columns(state),
       {:ok, base} <- Http.base_url(state) do
 
       query = URI.encode_query(state.query)
 
-      Logger.debug("Exsoda Query https://#{domain}/api/resource/#{state.fourfour}.csv?#{query}")
       stream = "#{base}/resource/#{state.fourfour}.csv?#{query}"
-      |> HTTPoison.get(%{}, [{:stream_to, self} | Http.opts(state)])
+      |> HTTPoison.get(Http.headers(state), [{:stream_to, self} | Http.opts(state)])
       |> as_line_stream
       |> CSV.parse_stream(headers: false)
       |> Stream.transform(nil,

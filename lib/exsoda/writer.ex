@@ -20,19 +20,13 @@ defmodule Exsoda.Writer do
 
 
   defmodule Write do
-    defstruct domain: nil,
-      host: nil,
-      account: nil,
-      password: nil,
+    defstruct opts: %{},
       operations: []
   end
 
   def write(options \\ []) do
     %Write{
-      domain:   Http.conf_fallback(options, :domain),
-      account:  Http.conf_fallback(options, :account),
-      password: Http.conf_fallback(options, :password),
-      host:     Http.conf_fallback(options, :host)
+      opts: Http.options(options)
     }
   end
 

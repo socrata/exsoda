@@ -5,9 +5,11 @@ defmodule ExsodaTest.Reader do
 
   defp expected_state(query) do
     %Exsoda.Reader.Query{
-      account: Application.get_env(:exsoda, :account),
-      password: Application.get_env(:exsoda, :password),
-      domain: "cheetah.test-socrata.com",
+      opts: %{
+        password: Application.get_env(:exsoda, :password),
+        account: Application.get_env(:exsoda, :account),
+        domain: "cheetah.test-socrata.com",
+      },
       fourfour: "four-four",
       query: query}
   end
@@ -103,7 +105,7 @@ defmodule ExsodaTest.Reader do
   end
 
 
-  test "can make an group" do
+  test "can make a group" do
     result = query("four-four")
     |> select([:region, :magnitude])
     |> where("magnitude > 4.0")
