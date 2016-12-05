@@ -16,6 +16,4 @@ defmodule ExsodaTest.Http do
     actual = Http.base_url(%{opts: %{host: fn -> {:ok, "foo"} end}})
     assert actual == {:ok, "https://foo/api"}
   end
-
-
 end

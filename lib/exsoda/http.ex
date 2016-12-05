@@ -7,7 +7,8 @@ defmodule Exsoda.Http do
 
   def make_url(url) do
     proto = Application.get_env(:exsoda, :protocol, "https")
-    "#{proto}://#{url}/api"
+    api_root = Application.get_env(:exsoda, :api_root, "/api")
+    "#{proto}://#{url}#{api_root}"
   end
 
 
