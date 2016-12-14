@@ -58,7 +58,7 @@ defmodule Exsoda.Writer do
   end
 
   defp do_run(%Upsert{} = u, w) do
-    post("/resource/#{u.fourfour}.json", w, u.rows)
+    post("/id/#{u.fourfour}.json", w, u.rows)
   end
 
   def run(%Write{} = w) do
