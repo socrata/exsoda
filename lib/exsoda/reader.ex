@@ -47,7 +47,7 @@ defmodule Exsoda.Reader do
 
       query = URI.encode_query(state.query)
 
-      stream = "#{base}/resource/#{state.fourfour}.csv?#{query}"
+      stream = "#{base}/id/#{state.fourfour}.csv?#{query}"
       |> HTTPoison.get(Http.headers(state), [{:stream_to, self} | Http.opts(state)])
       |> as_line_stream
       |> CSV.parse_stream(headers: false)
