@@ -1,13 +1,14 @@
 defmodule ExsodaTest.Reader do
   use ExUnit.Case, async: true
   import Exsoda.Reader
+  alias Exsoda.Config
 
 
   defp expected_state(query) do
     %Exsoda.Reader.Query{
       opts: %{
-        password: Application.get_env(:exsoda, :password),
-        account: Application.get_env(:exsoda, :account),
+        password: Config.get(:exsoda, :password),
+        account: Config.get(:exsoda, :account),
         domain: "cheetah.test-socrata.com",
       },
       fourfour: "four-four",
