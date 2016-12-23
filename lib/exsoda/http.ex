@@ -50,9 +50,16 @@ defmodule Exsoda.Http do
   def opts(%{opts: options}) do
     [
       hackney: hackney_opts(options),
-      timeout: Config.get_integer(:exsoda, :timeout, 8000),
-      recv_timeout: Config.get_integer(:exsoda, :recv_timeout, 5000)
+      timeout: options.timeout,
+      recv_timeout: options.recv_timeout
     ]
+  end
+
+  defp add_opt(opts, user_opts, key, default) do
+    case conf_fallback(user_opts, key) do
+      nil -> Map.put(opts, key, default)
+      value -> Map.put(opts, key, value)
+    end
   end
 
   defp add_opt(opts, user_opts, key) do
@@ -69,6 +76,8 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :password)
     |> add_opt(user_opts, :host)
     |> add_opt(user_opts, :cookie)
+    |> add_opt(user_opts, :recv_timeout, 5_000)
+    |> add_opt(user_opts, :timeout, 5_000)
   end
 
   def as_json({:ok, %Response{body: body, status_code: status}}) when (status >= 200) and (status < 300)  do
