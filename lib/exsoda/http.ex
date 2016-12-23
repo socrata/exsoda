@@ -50,8 +50,8 @@ defmodule Exsoda.Http do
   def opts(%{opts: options}) do
     [
       hackney: hackney_opts(options),
-      timeout: Config.get(:exsoda, :timeout, 8000),
-      recv_timeout: Config.get(:exsoda, :recv_timeout, 5000)
+      timeout: Config.get_integer(:exsoda, :timeout, 8000),
+      recv_timeout: Config.get_integer(:exsoda, :recv_timeout, 5000)
     ]
   end
 

@@ -1,4 +1,5 @@
 defmodule Exsoda.Config do
+  require Logger
   @moduledoc """
   This module handles fetching values from the config with some additional niceties
 
@@ -54,7 +55,9 @@ defmodule Exsoda.Config do
       n ->
         case Integer.parse(n) do
           {i, _} -> i
-          :error -> default
+          :error ->
+            Logger.warn("Unable to parse '#{n}' as an integer, falling back to default for '#{key}' in #{app}!")
+            default
         end
     end
   end
