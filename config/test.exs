@@ -1,6 +1,6 @@
 use Mix.Config
 
 config :exsoda,
-  account: System.get_env("SOCRATA_USER"),
-  password: System.get_env("SOCRATA_PASS"),
+  account: {:system, "SOCRATA_USER"},
+  password: {:system, "SOCRATA_PASSWORD"},
   domain: "cheetah.test-socrata.com"

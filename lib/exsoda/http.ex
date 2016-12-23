@@ -1,13 +1,14 @@
 defmodule Exsoda.Http do
   alias HTTPoison.Response
+  alias Exsoda.Config
 
   def conf_fallback(options, key) do
-    Keyword.get(options, key, Application.get_env(:exsoda, key))
+    Keyword.get(options, key, Config.get(:exsoda, key))
   end
 
   def make_url(url) do
-    proto = Application.get_env(:exsoda, :protocol, "https")
-    api_root = Application.get_env(:exsoda, :api_root, "/api")
+    proto = Config.get(:exsoda, :protocol, "https")
+    api_root = Config.get(:exsoda, :api_root, "/api")
     "#{proto}://#{url}#{api_root}"
   end
 
@@ -38,19 +39,19 @@ defmodule Exsoda.Http do
 
 
   defp hackney_opts(%{cookie: cookie}) do
-    [{:cookie, cookie} | Application.get_env(:exsoda, :hackney_opts, [])]
+    [{:cookie, cookie} | Config.get(:exsoda, :hackney_opts, [])]
   end
   defp hackney_opts(%{account: account, password: password}) do
-    [{:basic_auth, {account, password}} | Application.get_env(:exsoda, :hackney_opts, [])]
+    [{:basic_auth, {account, password}} | Config.get(:exsoda, :hackney_opts, [])]
   end
-  defp hackney_opts(_), do: Application.get_env(:exsoda, :hackney_opts, [])
+  defp hackney_opts(_), do: Config.get(:exsoda, :hackney_opts, [])
 
 
   def opts(%{opts: options}) do
     [
       hackney: hackney_opts(options),
-      timeout: Application.get_env(:exsoda, :timeout, 8000),
-      recv_timeout: Application.get_env(:exsoda, :recv_timeout, 5000)
+      timeout: Config.get_integer(:exsoda, :timeout, 8000),
+      recv_timeout: Config.get_integer(:exsoda, :recv_timeout, 5000)
     ]
   end
 
