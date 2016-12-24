@@ -111,4 +111,40 @@ defmodule ExsodaTest.Writer do
     assert Enum.into(rows_stream, []) == [[{"text column", "a text value"}], [{"text column", "a second text value"}]]
   end
 
+  test "can do a streaming upsert" do
+    [{:ok, %{"id" => fourfour}}] = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    [{:ok, _}] = Writer.write()
+    |> Writer.create_column(fourfour, "text column", "text", %{})
+    |> Writer.run
+
+    results = Writer.write()
+    |> Writer.upsert(
+      fourfour,
+      Stream.map(0..8, fn i ->
+        %{text_column: "value #{i}"}
+      end)
+    )
+    |> Writer.run
+
+    assert [{:ok, _}] = results
+
+    {:ok, rows_stream} = Reader.query(fourfour)
+    |> Reader.run
+
+    assert Enum.into(rows_stream, []) == [
+      [{"text column", "value 0"}],
+      [{"text column", "value 1"}],
+      [{"text column", "value 2"}],
+      [{"text column", "value 3"}],
+      [{"text column", "value 4"}],
+      [{"text column", "value 5"}],
+      [{"text column", "value 6"}],
+      [{"text column", "value 7"}],
+      [{"text column", "value 8"}]
+    ]
+  end
+
 end

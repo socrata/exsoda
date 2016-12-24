@@ -48,17 +48,38 @@ defmodule Exsoda.Writer do
 
   defp do_run(%CreateView{} = cv, w) do
     data = Map.merge(cv.properties, %{name: cv.name})
-    post("/views.json", w, data)
+    with {:ok, json} <- Poison.encode(data) do
+      post("/views.json", w, json)
+    end
   end
 
   defp do_run(%CreateColumn{} = cc, w) do
     data = Map.take(cc, [:dataTypeName, :name])
     |> Map.merge(cc.properties)
-    post("/views/#{cc.fourfour}/columns", w, data)
+
+    with {:ok, json} <- Poison.encode(data) do
+      post("/views/#{cc.fourfour}/columns", w, json)
+    end
   end
 
-  defp do_run(%Upsert{} = u, w) do
-    post("/id/#{u.fourfour}.json", w, u.rows)
+  defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
+    with {:ok, json} <- Poison.encode(rows) do
+      post("/id/#{u.fourfour}.json", w, json)
+    end
+  end
+  defp do_run(%Upsert{rows: rows} = u, w) do
+    with_commas = Stream.transform(rows, false, fn
+      row, false -> {[Poison.encode!(row)], true}
+      row, true  -> {[",\n" <> Poison.encode!(row)], true}
+    end)
+
+    json_stream = Stream.concat(
+      ["["],
+      with_commas
+    )
+    |> Stream.concat(["]"])
+
+    post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
   end
 
   def run(%Write{} = w) do
@@ -72,28 +93,27 @@ defmodule Exsoda.Writer do
   end
 
 
-  defp post(path, write, data) do
-    with {:ok, json} <- Poison.encode(data),
-      {:ok, base} <- Http.base_url(write) do
+  defp post(path, write, body) do
+    with {:ok, base} <- Http.base_url(write) do
       HTTPoison.post(
         "#{base}#{path}",
-        json,
+        body,
         Http.headers(write),
         Http.opts(write)
       ) |> Http.as_json
     end
   end
 
-  defp put(path, write, data) do
-    with {:ok, json} <- Poison.encode(data),
-      {:ok, base} <- Http.base_url(write) do
-      HTTPoison.put(
-        "#{base}#{path}",
-        json,
-        Http.headers(write),
-        Http.opts(write)
-      ) |> Http.as_json
-    end
-  end
+  # defp put(path, write, data) do
+  #   with {:ok, json} <- Poison.encode(data),
+  #     {:ok, base} <- Http.base_url(write) do
+  #     HTTPoison.put(
+  #       "#{base}#{path}",
+  #       json,
+  #       Http.headers(write),
+  #       Http.opts(write)
+  #     ) |> Http.as_json
+  #   end
+  # end
 
 end
