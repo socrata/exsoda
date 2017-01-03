@@ -2,7 +2,7 @@ defmodule ExsodaTest.Writer do
   use ExUnit.Case, async: true
   alias Exsoda.Writer
   alias Exsoda.Reader
-  alias Exsoda.Writer.{CreateView, CreateColumn}
+  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn}
 
   test "can create a create_view operation" do
     w = Writer.write()
@@ -37,6 +37,33 @@ defmodule ExsodaTest.Writer do
     |> Writer.run
 
     assert [{:error, _}] = results
+  end
+
+  test "can create an UpdateView operation" do
+    w = Writer.write()
+    |> Writer.update("meow-meow", %{description: "describes"})
+
+    assert w.operations == [%UpdateView{
+      fourfour: "meow-meow",
+      properties: %{description: "describes"}
+    }]
+  end
+
+  test "can run an UpdateView operation" do
+    [{:ok, %{"id" => fourfour}}] = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    results = Writer.write()
+    |> Writer.update(fourfour, %{description: "does not describe"})
+    |> Writer.run
+
+    assert [{:ok, _}] = results
+
+    {:ok, view} = Reader.query(fourfour)
+    |> Reader.get_view
+
+    assert "does not describe" == Map.get(view, "description", nil)
   end
 
   test "can create a CreateColumn operation" do
