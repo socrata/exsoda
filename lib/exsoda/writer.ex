@@ -13,6 +13,11 @@ defmodule Exsoda.Writer do
     properties: %{}
   end
 
+  defmodule UpdateView do
+    defstruct fourfour: nil,
+    properties: %{}
+  end
+
   defmodule Upsert do
     defstruct fourfour: nil,
     rows: []
@@ -35,6 +40,11 @@ defmodule Exsoda.Writer do
     %{ w | operations: [operation | w.operations] }
   end
 
+  def update(%Write{} = w, fourfour, properties) do
+    operation = %UpdateView{fourfour: fourfour, properties: properties}
+    %{ w | operations: [operation | w.operations] }
+  end
+
   def create_column(%Write{} = w, fourfour, name, type, properties) do
     operation = %CreateColumn{name: name, dataTypeName: type, fourfour: fourfour, properties: properties}
     %{ w | operations: [operation | w.operations] }
@@ -50,6 +60,12 @@ defmodule Exsoda.Writer do
     data = Map.merge(cv.properties, %{name: cv.name})
     with {:ok, json} <- Poison.encode(data) do
       post("/views.json", w, json)
+    end
+  end
+
+  defp do_run(%UpdateView{} = uv, w) do
+    with {:ok, json} <- Poison.encode(uv.properties) do
+      put("/views/#{uv.fourfour}.json", w, json)
     end
   end
 
@@ -104,16 +120,14 @@ defmodule Exsoda.Writer do
     end
   end
 
-  # defp put(path, write, data) do
-  #   with {:ok, json} <- Poison.encode(data),
-  #     {:ok, base} <- Http.base_url(write) do
-  #     HTTPoison.put(
-  #       "#{base}#{path}",
-  #       json,
-  #       Http.headers(write),
-  #       Http.opts(write)
-  #     ) |> Http.as_json
-  #   end
-  # end
-
+  defp put(path, write, body) do
+    with {:ok, base} <- Http.base_url(write) do
+      HTTPoison.put(
+        "#{base}#{path}",
+        body,
+        Http.headers(write),
+        Http.opts(write)
+      ) |> Http.as_json
+    end
+  end
 end
