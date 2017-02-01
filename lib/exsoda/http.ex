@@ -80,14 +80,16 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :timeout, 5_000)
   end
 
-  def as_json({:ok, %Response{body: body, status_code: status}}) when (status >= 200) and (status < 300)  do
-    Poison.decode(body)
+  def as_json(result, json_opts \\ [])
+
+  def as_json({:ok, %Response{body: body, status_code: status}}, json_opts) when (status >= 200) and (status < 300)  do
+    Poison.decode(body, json_opts)
   end
 
-  def as_json({:ok, bad_status}) do
+  def as_json({:ok, bad_status}, _json_opts) do
     {:error, bad_status}
   end
 
-  def as_json(error), do: error
+  def as_json(error, _json_opts), do: error
 
 end
