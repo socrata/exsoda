@@ -50,7 +50,7 @@ end
 ```
 
 ## Get a view
-```
+```elixir
 iex(1)> import Exsoda.Reader
 
 iex(2)> query("hcnj-rei3", domain: "data.austintexas.gov") |> get_view
