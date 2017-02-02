@@ -4,9 +4,13 @@ defmodule Exsoda.ConfigurationReader do
 
   defmodule GetConfig do
     defstruct type: nil,
-      default_only: nil,
-      merge: nil
+      default_only: false,
+      merge: false
   end
+
+  defp camelized_get_config(:type), do: "type"
+  defp camelized_get_config(:default_only), do: "defaultOnly"
+  defp camelized_get_config(:merge), do: "merge"
 
   defmodule Query do
     defstruct opts: %{},
@@ -19,9 +23,7 @@ defmodule Exsoda.ConfigurationReader do
     }
   end
 
-  def get_config_defaults, do: %GetConfig{default_only: false, merge: false}
-
-  def get_config(%Query{} = r, type, %GetConfig{}=defaults \\ get_config_defaults) do
+  def get_config(%Query{} = r, type, %GetConfig{} = defaults \\ %GetConfig{}) do
     operation = %{defaults | type: type}
     %{r | operations: [operation | r.operations]}
   end
@@ -38,9 +40,11 @@ defmodule Exsoda.ConfigurationReader do
   end
 
   defp do_run(%GetConfig{} = fc, r) do
-    # The !!s normalize a truthy value to boolean
-    # it doesn't look like there's an easy way to do a form GET in httpoison..?
-    get("/configurations?type=#{URI.encode(fc.type)}&defaultOnly=#{!!fc.default_only}&merge=#{!!fc.merge}", r,
+    query_str = fc
+    |> Map.from_struct
+    |> Enum.map(fn {k, v} -> {camelized_get_config(k), v} end)
+    |> URI.encode_query
+    get("/configurations?#{query_str}", r,
       as: [%Configuration{properties: [%Configuration.Property{}]}])
   end
 

@@ -28,7 +28,7 @@ defmodule ExsodaTest.ConfigurationReader do
 
   test "can query a config" do
     [ok: response] = ConfigurationReader.query
-    |> ConfigurationReader.get_config("view_categories", %{ConfigurationReader.get_config_defaults | merge: true})
+    |> ConfigurationReader.get_config("view_categories", %ConfigurationReader.GetConfig{merge: true})
     |> ConfigurationReader.run
 
     assert response == [%Configuration{id: 1,
