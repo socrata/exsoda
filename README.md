@@ -1,5 +1,4 @@
-# exsoda [![Build Status](https://travis-ci.org/rozap/exsoda.svg?branch=master)](https://travis-ci.org/rozap/exsoda)
-
+# exsoda 
 ## What
 This is a tiny wrapper for the socrata Soda2 open data API. It returns datasets as elixir streams for lazy evaluation.
 
