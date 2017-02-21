@@ -59,13 +59,13 @@ defmodule Exsoda.Writer do
   defp do_run(%CreateView{} = cv, w) do
     data = Map.merge(cv.properties, %{name: cv.name})
     with {:ok, json} <- Poison.encode(data) do
-      post("/views.json", w, json)
+      Http.post("/views.json", w, json)
     end
   end
 
   defp do_run(%UpdateView{} = uv, w) do
     with {:ok, json} <- Poison.encode(uv.properties) do
-      put("/views/#{uv.fourfour}.json", w, json)
+      Http.put("/views/#{uv.fourfour}.json", w, json)
     end
   end
 
@@ -74,13 +74,13 @@ defmodule Exsoda.Writer do
     |> Map.merge(cc.properties)
 
     with {:ok, json} <- Poison.encode(data) do
-      post("/views/#{cc.fourfour}/columns", w, json)
+      Http.post("/views/#{cc.fourfour}/columns", w, json)
     end
   end
 
   defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
     with {:ok, json} <- Poison.encode(rows) do
-      post("/id/#{u.fourfour}.json", w, json)
+      Http.post("/id/#{u.fourfour}.json", w, json)
     end
   end
   defp do_run(%Upsert{rows: rows} = u, w) do
@@ -95,7 +95,7 @@ defmodule Exsoda.Writer do
     )
     |> Stream.concat(["]"])
 
-    post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
+    Http.post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
   end
 
   def run(%Write{} = w) do
@@ -108,26 +108,4 @@ defmodule Exsoda.Writer do
     |> Enum.reverse
   end
 
-
-  defp post(path, write, body) do
-    with {:ok, base} <- Http.base_url(write) do
-      HTTPoison.post(
-        "#{base}#{path}",
-        body,
-        Http.headers(write),
-        Http.opts(write)
-      ) |> Http.as_json
-    end
-  end
-
-  defp put(path, write, body) do
-    with {:ok, base} <- Http.base_url(write) do
-      HTTPoison.put(
-        "#{base}#{path}",
-        body,
-        Http.headers(write),
-        Http.opts(write)
-      ) |> Http.as_json
-    end
-  end
 end

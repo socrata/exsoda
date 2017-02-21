@@ -92,4 +92,39 @@ defmodule Exsoda.Http do
 
   def as_json(error, _json_opts), do: error
 
+  def get(path, op) do
+    with {:ok, base} <- base_url(op) do
+      HTTPoison.get(
+        "#{base}#{path}",
+        headers(op),
+        opts(op)
+      )
+      |> as_json
+    end
+  end
+
+  def post(path, op, body) do
+    with {:ok, base} <- base_url(op) do
+      HTTPoison.post(
+        "#{base}#{path}",
+        body,
+        headers(op),
+        opts(op)
+      )
+      |> as_json
+    end
+  end
+
+  def put(path, op, body) do
+    with {:ok, base} <- base_url(op) do
+      HTTPoison.put(
+        "#{base}#{path}",
+        body,
+        headers(op),
+        opts(op)
+      )
+      |> as_json
+    end
+  end
+
 end
