@@ -1,5 +1,4 @@
-# exsoda [![Build Status](https://travis-ci.org/rozap/exsoda.svg?branch=master)](https://travis-ci.org/rozap/exsoda)
-
+# exsoda 
 ## What
 This is a tiny wrapper for the socrata Soda2 open data API. It returns datasets as elixir streams for lazy evaluation.
 
@@ -50,7 +49,7 @@ end
 ```
 
 ## Get a view
-```
+```elixir
 iex(1)> import Exsoda.Reader
 
 iex(2)> query("hcnj-rei3", domain: "data.austintexas.gov") |> get_view
