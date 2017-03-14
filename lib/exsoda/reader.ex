@@ -28,9 +28,10 @@ defmodule Exsoda.Reader do
   end
 
   def get_view(%Query{fourfour: fourfour} = state) do
-    with {:ok, base} <- Http.base_url(state) do
+    with {:ok, base} <- Http.base_url(state),
+         {:ok, options} <- Http.opts(state) do
       "#{base}/views/#{fourfour}.json"
-      |> HTTPoison.get(Http.headers(state), Http.opts(state))
+      |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
   end
@@ -43,12 +44,13 @@ defmodule Exsoda.Reader do
 
   def run(%Query{} = state) do
     with {:ok, columns} <- get_columns(state),
-      {:ok, base} <- Http.base_url(state) do
+         {:ok, base} <- Http.base_url(state),
+         {:ok, options} <- Http.opts(state) do
 
       query = URI.encode_query(state.query)
 
       stream = "#{base}/id/#{state.fourfour}.csv?#{query}"
-      |> HTTPoison.get(Http.headers(state), [{:stream_to, self} | Http.opts(state)])
+      |> HTTPoison.get(Http.headers(state), [{:stream_to, self} | options])
       |> as_line_stream
       |> CSV.parse_stream(headers: false)
       |> Stream.transform(nil,

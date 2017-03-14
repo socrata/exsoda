@@ -29,7 +29,6 @@ defmodule Exsoda.Http do
     {:ok, make_url(domain)}
   end
 
-
   def headers(%{opts: %{domain: domain}}) do
     [
       {"Content-Type", "application/json"},
@@ -37,22 +36,55 @@ defmodule Exsoda.Http do
     ]
   end
 
+  defp get_cookie(%{
+    spoof: %{
+      spoofee_email: spoofee_email,
+      spoofer_email: spoofer_email,
+      spoofer_password: spoofer_password
+    },
+    host: host,
+    domain: domain} = opts) do
+    body = [{"username", "#{spoofee_email} #{spoofer_email}"}, {"password", "#{spoofer_password}"}]
+    headers = [{"X-Socrata-Host", domain}, {"Content-Type", "application/x-www-form-urlencoded"}]
+
+    with {:ok, base} <- base_url(%{opts: opts}),
+         auth_path <- URI.to_string(URI.merge(base, "authenticate")),
+         {:ok, response} <- HTTPoison.post(auth_path, {:form, body}, headers) do
+
+      Enum.find_value(response.headers, {:error, "No cookie"}, fn
+        {"Set-Cookie", v} -> {:ok, v}
+        _ -> false
+      end)
+    end
+  end
 
   defp hackney_opts(%{cookie: cookie}) do
-    [{:cookie, cookie} | Config.get(:exsoda, :hackney_opts, [])]
+    {:ok, [{:cookie, cookie} | Config.get(:exsoda, :hackney_opts, [])]}
   end
   defp hackney_opts(%{account: account, password: password}) do
-    [{:basic_auth, {account, password}} | Config.get(:exsoda, :hackney_opts, [])]
+    {:ok, [{:basic_auth, {account, password}} | Config.get(:exsoda, :hackney_opts, [])]}
   end
-  defp hackney_opts(_), do: Config.get(:exsoda, :hackney_opts, [])
-
+  defp hackney_opts(%{
+    spoof: spoof,
+    host: host,
+    domain: domain
+  } = opts) do
+    with {:ok, cookie} <- get_cookie(opts) do
+      hackney_opts(%{cookie: cookie})
+    end
+  end
+  defp hackney_opts(_), do: {:ok, Config.get(:exsoda, :hackney_opts, [])}
 
   def opts(%{opts: options}) do
-    [
-      hackney: hackney_opts(options),
-      timeout: options.timeout,
-      recv_timeout: options.recv_timeout
-    ]
+    with {:ok, h_opts} <- hackney_opts(options) do
+      {:ok,
+      [
+        hackney: h_opts,
+        timeout: options.timeout,
+        recv_timeout: options.recv_timeout
+      ]
+      }
+    end
   end
 
   defp add_opt(opts, user_opts, key, default) do
@@ -71,6 +103,7 @@ defmodule Exsoda.Http do
 
   def options(user_opts) do
     %{}
+    |> add_opt(user_opts, :spoof)
     |> add_opt(user_opts, :domain)
     |> add_opt(user_opts, :account)
     |> add_opt(user_opts, :password)
@@ -93,35 +126,38 @@ defmodule Exsoda.Http do
   def as_json(error, _json_opts), do: error
 
   def get(path, op) do
-    with {:ok, base} <- base_url(op) do
+    with {:ok, base} <- base_url(op),
+         {:ok, options} <- opts(op) do
       HTTPoison.get(
         "#{base}#{path}",
         headers(op),
-        opts(op)
+        options
       )
       |> as_json
     end
   end
 
   def post(path, op, body) do
-    with {:ok, base} <- base_url(op) do
+    with {:ok, base} <- base_url(op),
+         {:ok, options} <- opts(op) do
       HTTPoison.post(
         "#{base}#{path}",
         body,
         headers(op),
-        opts(op)
+        options
       )
       |> as_json
     end
   end
 
   def put(path, op, body) do
-    with {:ok, base} <- base_url(op) do
+    with {:ok, base} <- base_url(op),
+         {:ok, options} <- opts(op) do
       HTTPoison.put(
         "#{base}#{path}",
         body,
         headers(op),
-        opts(op)
+        options
       )
       |> as_json
     end
