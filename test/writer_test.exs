@@ -1,5 +1,6 @@
 defmodule ExsodaTest.Writer do
   use ExUnit.Case, async: true
+  alias Exsoda.Config
   alias Exsoda.Writer
   alias Exsoda.Reader
   alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn}
@@ -174,4 +175,20 @@ defmodule ExsodaTest.Writer do
     ]
   end
 
+  test "can spoof a user during a write request" do
+    spoofee_email = "test-viewer@socrata.com"
+    spoof = %{
+      spoofee_email: spoofee_email,
+      spoofer_email: Config.get(:exsoda, :account),
+      spoofer_password: Config.get(:exsoda, :password)
+    }
+    opts = [{:spoof, spoof}, {:host, "lb-vip.aws-us-west-2-staging.socrata.net:8081"}, {:api_root, ""}, {:protocol, "http"}]
+
+    [{:error, response}] = Writer.write(opts)
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    assert {:ok, %{"code" => "permission_denied", "error" => true}} = Poison.decode(response.body)
+    assert 403 == response.status_code
+  end
 end
