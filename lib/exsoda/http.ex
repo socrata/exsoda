@@ -6,27 +6,33 @@ defmodule Exsoda.Http do
     Keyword.get(options, key, Config.get(:exsoda, key))
   end
 
-  def make_url(url) do
-    proto = Config.get(:exsoda, :protocol, "https")
-    api_root = Config.get(:exsoda, :api_root, "/api")
+  defp make_url(url, api_root, proto) do
     "#{proto}://#{url}#{api_root}"
   end
 
+  def base_url(%{opts: %{
+      host: {:system, env_var, default},
+      api_root: api_root,
+      protocol: protocol
+    }}) do
 
-  def base_url(%{opts: %{host: {:system, env_var, default}}}) do
     host_str = System.get_env(env_var) || default
-    {:ok, make_url(host_str)}
+    {:ok, make_url(host_str, api_root, protocol)}
   end
-  def base_url(%{opts: %{host: host}}) when is_function(host, 0) do
+  def base_url(%{opts: %{
+      host: host,
+      api_root: api_root,
+      protocol: protocol
+    }}) when is_function(host, 0) do
     with {:ok, host_str} <- host.() do
-      {:ok, make_url(host_str)}
+      {:ok, make_url(host_str, api_root, protocol)}
     end
   end
-  def base_url(%{opts: %{host: host}}) do
-    {:ok, make_url(host)}
+  def base_url(%{opts: %{host: host, api_root: api_root, protocol: protocol}}) do
+    {:ok, make_url(host, api_root, protocol)}
   end
-  def base_url(%{opts: %{domain: domain}}) do
-    {:ok, make_url(domain)}
+  def base_url(%{opts: %{domain: domain, api_root: api_root, protocol: protocol}}) do
+    {:ok, make_url(domain, api_root, protocol)}
   end
 
   def headers(%{opts: %{domain: domain}}) do
@@ -42,7 +48,7 @@ defmodule Exsoda.Http do
       spoofer_email: spoofer_email,
       spoofer_password: spoofer_password
     },
-    host: host,
+    host: _host,
     domain: domain} = opts) do
     body = [{"username", "#{spoofee_email} #{spoofer_email}"}, {"password", "#{spoofer_password}"}]
     headers = [{"X-Socrata-Host", domain}, {"Content-Type", "application/x-www-form-urlencoded"}]
@@ -51,7 +57,7 @@ defmodule Exsoda.Http do
          auth_path <- URI.to_string(URI.merge(base, "authenticate")),
          {:ok, response} <- HTTPoison.post(auth_path, {:form, body}, headers) do
 
-      Enum.find_value(response.headers, {:error, "No cookie"}, fn
+      Enum.find_value(response.headers, {:error, "There was no 'Set-Cookie' header in the authentication response."}, fn
         {"Set-Cookie", v} -> {:ok, v}
         _ -> false
       end)
@@ -61,17 +67,16 @@ defmodule Exsoda.Http do
   defp hackney_opts(%{cookie: cookie}) do
     {:ok, [{:cookie, cookie} | Config.get(:exsoda, :hackney_opts, [])]}
   end
-  defp hackney_opts(%{account: account, password: password}) do
-    {:ok, [{:basic_auth, {account, password}} | Config.get(:exsoda, :hackney_opts, [])]}
-  end
   defp hackney_opts(%{
-    spoof: spoof,
-    host: host,
-    domain: domain
+    spoof: _spoof,
+    host: _host,
   } = opts) do
     with {:ok, cookie} <- get_cookie(opts) do
       hackney_opts(%{cookie: cookie})
     end
+  end
+  defp hackney_opts(%{account: account, password: password}) do
+    {:ok, [{:basic_auth, {account, password}} | Config.get(:exsoda, :hackney_opts, [])]}
   end
   defp hackney_opts(_), do: {:ok, Config.get(:exsoda, :hackney_opts, [])}
 
@@ -109,6 +114,8 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :password)
     |> add_opt(user_opts, :host)
     |> add_opt(user_opts, :cookie)
+    |> add_opt(user_opts, :api_root, "/api")
+    |> add_opt(user_opts, :protocol, "https")
     |> add_opt(user_opts, :recv_timeout, 5_000)
     |> add_opt(user_opts, :timeout, 5_000)
   end

@@ -11,7 +11,9 @@ defmodule ExsodaTest.Reader do
         account: Config.get(:exsoda, :account),
         domain: "cheetah.test-socrata.com",
         recv_timeout: 5000,
-        timeout: 5000
+        timeout: 5000,
+        api_root: "/api",
+        protocol: "https"
       },
       fourfour: "four-four",
       query: query}
