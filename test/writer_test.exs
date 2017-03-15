@@ -175,6 +175,7 @@ defmodule ExsodaTest.Writer do
     ]
   end
 
+  # This test requires being on the us-west-2 VPN to pass
   test "can spoof a user during a write request" do
     spoofee_email = "test-viewer@socrata.com"
     spoof = %{
