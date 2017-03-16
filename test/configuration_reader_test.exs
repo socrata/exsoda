@@ -13,7 +13,9 @@ defmodule ExsodaTest.ConfigurationReader do
         recv_timeout: 5000,
         timeout: 5000,
         api_root: "/api",
-        protocol: "https"
+        protocol: "https",
+        user_agent: "exsoda",
+        request_id: "fake-uuid"
       },
       operations: [query]
     }

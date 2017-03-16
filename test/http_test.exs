@@ -26,4 +26,12 @@ defmodule ExsodaTest.Http do
     actual = Http.base_url(%{opts: %{host: "foo", api_root: "", protocol: "http"}})
     assert actual == {:ok, "http://foo"}
   end
+
+  test "can override user_agent and request_id options" do
+    base_options = Http.options([{}])
+    overriden_options = Http.options([{:user_agent, "test-agent"}, {:request_id, "different-fake-uuid"}])
+    assert overriden_options.user_agent == "test-agent"
+    assert overriden_options.request_id == "different-fake-uuid"
+
+  end
 end
