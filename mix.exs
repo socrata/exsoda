@@ -44,7 +44,8 @@ defmodule Exsoda.Mixfile do
       {:httpoison, "~> 0.11.0"},
       {:poison, "~> 2.2.0"},
       {:nimble_csv, "~> 0.1.0"},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:uuid, "~> 1.1"}
     ]
   end
 end

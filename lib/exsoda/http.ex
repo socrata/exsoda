@@ -35,10 +35,12 @@ defmodule Exsoda.Http do
     {:ok, make_url(domain, api_root, protocol)}
   end
 
-  def headers(%{opts: %{domain: domain}}) do
+  def headers(%{opts: %{domain: domain, user_agent: user_agent, request_id: request_id}}) do
     [
+      {"User-Agent", user_agent},
       {"Content-Type", "application/json"},
-      {"X-Socrata-Host", domain}
+      {"X-Socrata-Host", domain},
+      {"X-Socrata-RequestId", request_id}
     ]
   end
 
@@ -114,6 +116,8 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :password)
     |> add_opt(user_opts, :host)
     |> add_opt(user_opts, :cookie)
+    |> add_opt(user_opts, :user_agent, "exsoda")
+    |> add_opt(user_opts, :request_id, UUID.uuid4)
     |> add_opt(user_opts, :api_root, "/api")
     |> add_opt(user_opts, :protocol, "https")
     |> add_opt(user_opts, :recv_timeout, 5_000)
