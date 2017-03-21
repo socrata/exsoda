@@ -108,6 +108,16 @@ defmodule Exsoda.Http do
     end
   end
 
+  @alphabet String.split("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "")
+  @numbers String.split("0123456789", "")
+  @valid (@alphabet ++ @numbers ++ Enum.map(@alphabet, &String.downcase/1))
+
+  defp random_request_id(len \\ 32) do
+    1..len
+    |> Enum.map(fn _ -> Enum.random(@valid) end)
+    |> Enum.join("")
+  end
+
   def options(user_opts) do
     %{}
     |> add_opt(user_opts, :spoof)
@@ -117,7 +127,7 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :host)
     |> add_opt(user_opts, :cookie)
     |> add_opt(user_opts, :user_agent, "exsoda")
-    |> add_opt(user_opts, :request_id, UUID.uuid4)
+    |> add_opt(user_opts, :request_id, random_request_id)
     |> add_opt(user_opts, :api_root, "/api")
     |> add_opt(user_opts, :protocol, "https")
     |> add_opt(user_opts, :recv_timeout, 5_000)
