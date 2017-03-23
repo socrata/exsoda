@@ -15,7 +15,7 @@ defmodule ExsodaTest.ConfigurationReader do
         api_root: "/api",
         protocol: "https",
         user_agent: "exsoda",
-        request_id: "fake-uuid"
+        request_id: "fake_request_id"
       },
       operations: [query]
     }
