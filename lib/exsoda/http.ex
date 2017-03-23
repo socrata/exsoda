@@ -1,6 +1,7 @@
 defmodule Exsoda.Http do
   alias HTTPoison.Response
   alias Exsoda.Config
+  require Logger
 
   def conf_fallback(options, key) do
     Keyword.get(options, key, Config.get(:exsoda, key))
@@ -51,13 +52,19 @@ defmodule Exsoda.Http do
       spoofer_password: spoofer_password
     },
     host: _host,
-    domain: domain} = opts) do
+    domain: domain,
+    request_id: request_id} = opts) do
     body = [{"username", "#{spoofee_email} #{spoofer_email}"}, {"password", "#{spoofer_password}"}]
-    headers = [{"X-Socrata-Host", domain}, {"Content-Type", "application/x-www-form-urlencoded"}]
+    headers = [
+      {"X-Socrata-Host", domain},
+      {"Content-Type", "application/x-www-form-urlencoded"},
+      {"X-Socrata-RequestId", request_id}
+    ]
 
+    Logger.info("Authenticating with request id: #{request_id}")
     with {:ok, base} <- base_url(%{opts: opts}),
-         auth_path <- URI.to_string(URI.merge(base, "authenticate")),
-         {:ok, response} <- HTTPoison.post(auth_path, {:form, body}, headers) do
+         auth_path <- "#{base}/authenticate",
+         {:ok, %HTTPoison.Response{status_code: 200}=response} <- HTTPoison.post(auth_path, {:form, body}, headers) do
 
       Enum.find_value(response.headers, {:error, "There was no 'Set-Cookie' header in the authentication response."}, fn
         {"Set-Cookie", v} -> {:ok, v}
@@ -82,7 +89,7 @@ defmodule Exsoda.Http do
   end
   defp hackney_opts(_), do: {:ok, Config.get(:exsoda, :hackney_opts, [])}
 
-  def opts(%{opts: options}) do
+  def http_opts(%{opts: options}) do
     with {:ok, h_opts} <- hackney_opts(options) do
       {:ok,
       [
@@ -148,11 +155,12 @@ defmodule Exsoda.Http do
 
   def get(path, op) do
     with {:ok, base} <- base_url(op),
-         {:ok, options} <- opts(op) do
+         {:ok, http_options} <- http_opts(op) do
+      Logger.debug("Getting with request_id: #{op.opts.request_id}")
       HTTPoison.get(
         "#{base}#{path}",
         headers(op),
-        options
+        http_options
       )
       |> as_json
     end
@@ -160,12 +168,13 @@ defmodule Exsoda.Http do
 
   def post(path, op, body) do
     with {:ok, base} <- base_url(op),
-         {:ok, options} <- opts(op) do
+         {:ok, http_options} <- http_opts(op) do
+      Logger.debug("Posting with request_id: #{op.opts.request_id}")
       HTTPoison.post(
         "#{base}#{path}",
         body,
         headers(op),
-        options
+        http_options
       )
       |> as_json
     end
@@ -173,12 +182,13 @@ defmodule Exsoda.Http do
 
   def put(path, op, body) do
     with {:ok, base} <- base_url(op),
-         {:ok, options} <- opts(op) do
+         {:ok, http_options} <- http_opts(op) do
+      Logger.debug("Putting with request_id: #{op.opts.request_id}")
       HTTPoison.put(
         "#{base}#{path}",
         body,
         headers(op),
-        options
+        http_options
       )
       |> as_json
     end

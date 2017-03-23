@@ -5,4 +5,4 @@ config :exsoda,
   password: {:system, "SOCRATA_PASSWORD"},
   domain: "cheetah.test-socrata.com",
   user_agent: "exsoda",
-  request_id: "fake-uuid"
+  request_id: "fake_request_id"

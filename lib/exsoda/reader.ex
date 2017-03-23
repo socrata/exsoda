@@ -29,7 +29,7 @@ defmodule Exsoda.Reader do
 
   def get_view(%Query{fourfour: fourfour} = state) do
     with {:ok, base} <- Http.base_url(state),
-         {:ok, options} <- Http.opts(state) do
+         {:ok, options} <- Http.http_opts(state) do
       "#{base}/views/#{fourfour}.json"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
@@ -45,7 +45,7 @@ defmodule Exsoda.Reader do
   def run(%Query{} = state) do
     with {:ok, columns} <- get_columns(state),
          {:ok, base} <- Http.base_url(state),
-         {:ok, options} <- Http.opts(state) do
+         {:ok, options} <- Http.http_opts(state) do
 
       query = URI.encode_query(state.query)
 
