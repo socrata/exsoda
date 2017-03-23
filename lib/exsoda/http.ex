@@ -64,12 +64,15 @@ defmodule Exsoda.Http do
     Logger.info("Authenticating with request id: #{request_id}")
     with {:ok, base} <- base_url(%{opts: opts}),
          auth_path <- "#{base}/authenticate",
-         {:ok, %HTTPoison.Response{status_code: 200}=response} <- HTTPoison.post(auth_path, {:form, body}, headers) do
+         {:ok, %HTTPoison.Response{status_code: 200} = response} <- HTTPoison.post(auth_path, {:form, body}, headers) do
 
       Enum.find_value(response.headers, {:error, "There was no 'Set-Cookie' header in the authentication response."}, fn
         {"Set-Cookie", v} -> {:ok, v}
         _ -> false
       end)
+    else
+      {:ok, %HTTPoison.Response{} = non_200_resp} -> {:error, non_200_resp}
+      other -> other
     end
   end
 
