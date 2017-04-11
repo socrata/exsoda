@@ -3,7 +3,7 @@ defmodule ExsodaTest.Writer do
   alias Exsoda.Config
   alias Exsoda.Writer
   alias Exsoda.Reader
-  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn}
+  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn, Publish}
 
   test "can create a create_view operation" do
     w = Writer.write()
@@ -174,6 +174,31 @@ defmodule ExsodaTest.Writer do
       [{"text column", "value 8"}]
     ]
   end
+
+  test "can create a Publish operation" do
+    w = Writer.write()
+    |> Writer.publish("cafe-cafe")
+
+    assert w.operations == [
+      %Publish{
+        fourfour: "cafe-cafe"
+      }]
+  end
+
+  test "running Publish returns a list of results" do
+    results = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    [{:ok, %{"id" => id}}] = results
+
+    results = Writer.write()
+    |> Writer.publish(id)
+    |> Writer.run
+
+    assert [{:ok, %{"id" => ^id}}] = results
+  end
+
 
   # This test requires being on the us-west-2 VPN to pass
   test "can spoof a user during a write request" do

@@ -29,6 +29,10 @@ defmodule Exsoda.Writer do
       operations: []
   end
 
+  defmodule Publish do
+    defstruct fourfour: nil
+  end
+
   def write(options \\ []) do
     %Write{
       opts: Http.options(options)
@@ -54,6 +58,11 @@ defmodule Exsoda.Writer do
   def upsert(%Write{} = w, fourfour, rows) do
     operation = %Upsert{fourfour: fourfour, rows: rows}
     %{ w | operations: [operation | w.operations] }
+  end
+
+  def publish(%Write{} = w, fourfour) do
+    operation = %Publish{fourfour: fourfour}
+    %{ w | operations: [operation | w.operations]}
   end
 
   defp do_run(%CreateView{} = cv, w) do
@@ -96,6 +105,10 @@ defmodule Exsoda.Writer do
     |> Stream.concat(["]"])
 
     Http.post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
+  end
+
+  defp do_run(%Publish{fourfour: fourfour}, w) do
+    Http.post("/views/#{fourfour}/publication", w, Poison.encode!(%{}))
   end
 
   def run(%Write{} = w) do
