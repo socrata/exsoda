@@ -33,6 +33,11 @@ defmodule Exsoda.Writer do
     defstruct fourfour: nil
   end
 
+  defmodule Permission do
+    defstruct fourfour: nil,
+      mode: nil
+  end
+
   def write(options \\ []) do
     %Write{
       opts: Http.options(options)
@@ -62,6 +67,16 @@ defmodule Exsoda.Writer do
 
   def publish(%Write{} = w, fourfour) do
     operation = %Publish{fourfour: fourfour}
+    %{ w | operations: [operation | w.operations]}
+  end
+
+  def permission(%Write{} = w, fourfour, :public) do
+    operation = %Permission{fourfour: fourfour, mode: "public.read"}
+    %{ w | operations: [operation | w.operations]}
+  end
+
+  def permission(%Write{} = w, fourfour, :private) do
+    operation = %Permission{fourfour: fourfour, mode: "private"}
     %{ w | operations: [operation | w.operations]}
   end
 
@@ -108,7 +123,15 @@ defmodule Exsoda.Writer do
   end
 
   defp do_run(%Publish{fourfour: fourfour}, w) do
-    Http.post("/views/#{fourfour}/publication", w, Poison.encode!(%{}))
+    with {:ok, json} <- Poison.encode(%{}) do
+      Http.post("/views/#{fourfour}/publication", w, json)
+    end
+  end
+
+  defp do_run(%Permission{fourfour: fourfour, mode: mode}, w) do
+    with {:ok, json} <- Poison.encode(mode) do
+      Http.put("/views/#{fourfour}?method=setPermission", w, json)
+    end
   end
 
   def run(%Write{} = w) do
@@ -120,5 +143,4 @@ defmodule Exsoda.Writer do
     end)
     |> Enum.reverse
   end
-
 end
