@@ -3,7 +3,7 @@ defmodule ExsodaTest.Writer do
   alias Exsoda.Config
   alias Exsoda.Writer
   alias Exsoda.Reader
-  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn}
+  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn, Permission, Publish}
 
   test "can create a create_view operation" do
     w = Writer.write()
@@ -173,6 +173,74 @@ defmodule ExsodaTest.Writer do
       [{"text column", "value 7"}],
       [{"text column", "value 8"}]
     ]
+  end
+
+  test "can create a Publish operation" do
+    w = Writer.write()
+    |> Writer.publish("cafe-cafe")
+
+    assert w.operations == [
+      %Publish{
+        fourfour: "cafe-cafe"
+      }]
+  end
+
+  test "running Publish succeeds" do
+    results = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    [{:ok, %{"id" => id}}] = results
+
+    results = Writer.write()
+    |> Writer.publish(id)
+    |> Writer.run
+
+    assert [{:ok, %{"id" => ^id,
+                    "publicationStage" => "published"}}] = results
+  end
+
+  test "can create a public Permission operation" do
+    w = Writer.write()
+    |> Writer.permission("cafe-cafe", :public)
+
+    assert w.operations == [
+      %Permission{
+        fourfour: "cafe-cafe",
+        mode: "public.read"
+      }]
+  end
+
+  test "setting Permission succeeds" do
+    results = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    [{:ok, %{"id" => id} = view}] = results
+
+    assert !Map.has_key?(view, "grants")
+
+    results = Writer.write()
+    |> Writer.permission(id, :public)
+    |> Writer.run
+
+    assert [{:ok, _}] = results
+
+    {:ok, view} = Reader.query(id)
+    |> Reader.get_view
+
+    assert %{"grants" => [%{"flags" => ["public"]}]} = view
+
+    results = Writer.write()
+    |> Writer.permission(id, :private)
+    |> Writer.run
+
+    assert [{:ok, _}] = results
+
+    {:ok, view} = Reader.query(id)
+    |> Reader.get_view
+
+    assert !Map.has_key?(view, "grants")
   end
 
   # This test requires being on the us-west-2 VPN to pass
