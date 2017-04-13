@@ -195,9 +195,7 @@ defmodule Exsoda.Http do
       )
 
       case as_json(response) do
-        {:error, _} ->
-          {:ok, inner} = response
-          {:ok, inner.body}
+        {:error, _} -> response
         valid -> valid
       end
     end
