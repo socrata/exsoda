@@ -23,7 +23,6 @@ defmodule Exsoda.Writer do
     rows: []
   end
 
-
   defmodule Write do
     defstruct opts: %{},
       operations: []
@@ -36,6 +35,10 @@ defmodule Exsoda.Writer do
   defmodule Permission do
     defstruct fourfour: nil,
       mode: nil
+  end
+
+  defmodule PrepareDraftForImport do
+    defstruct fourfour: nil
   end
 
   def write(options \\ []) do
@@ -77,6 +80,11 @@ defmodule Exsoda.Writer do
 
   def permission(%Write{} = w, fourfour, :private) do
     operation = %Permission{fourfour: fourfour, mode: "private"}
+    %{ w | operations: [operation | w.operations]}
+  end
+
+  def prepare_draft_for_import(%Write{} = w, fourfour) do
+    operation = %PrepareDraftForImport{fourfour: fourfour}
     %{ w | operations: [operation | w.operations]}
   end
 
@@ -131,6 +139,12 @@ defmodule Exsoda.Writer do
   defp do_run(%Permission{fourfour: fourfour, mode: mode}, w) do
     with {:ok, json} <- Poison.encode(mode) do
       Http.put("/views/#{fourfour}?method=setPermission", w, json)
+    end
+  end
+
+  defp do_run(%PrepareDraftForImport{fourfour: fourfour}, w) do
+    with {:ok, json} <- Poison.encode(%{}) do
+      Http.patch("/views/#{fourfour}?method=prepareDraftForImport", w, json)
     end
   end
 

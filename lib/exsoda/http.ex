@@ -200,4 +200,22 @@ defmodule Exsoda.Http do
       end
     end
   end
+
+  def patch(path, op, body) do
+    with {:ok, base} <- base_url(op),
+         {:ok, http_options} <- http_opts(op) do
+      Logger.debug("Patching with request_id: #{op.opts.request_id}")
+      response = HTTPoison.patch(
+        "#{base}#{path}",
+        body,
+        headers(op),
+        http_options
+      )
+
+      case as_json(response) do
+        {:error, _} -> response
+        valid -> valid
+      end
+    end
+  end
 end

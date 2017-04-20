@@ -3,7 +3,7 @@ defmodule ExsodaTest.Writer do
   alias Exsoda.Config
   alias Exsoda.Writer
   alias Exsoda.Reader
-  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn, Permission, Publish}
+  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn, Permission, Publish, PrepareDraftForImport}
 
   test "can create a create_view operation" do
     w = Writer.write()
@@ -241,6 +241,29 @@ defmodule ExsodaTest.Writer do
     |> Reader.get_view
 
     assert !Map.has_key?(view, "grants")
+  end
+
+  test "can create a PrepareDraftForImport operation" do
+    w = Writer.write()
+    |> Writer.prepare_draft_for_import("meow-meow")
+
+    assert w.operations == [
+      %PrepareDraftForImport{
+        fourfour: "meow-meow"
+      }]
+  end
+
+  # This test requires being on the us-west-2 VPN to pass
+  test "running PrepareDraftForImport succeeds" do
+    results = Writer.write()
+    |> Writer.create("a name", %{description: "describes", displayType: "draft"})
+    |> Writer.run
+
+    [{:ok, %{"id" => id}}] = results
+
+    [{:ok, view}] = Writer.write()
+    |> Writer.prepare_draft_for_import(id)
+    |> Writer.run
   end
 
   # This test requires being on the us-west-2 VPN to pass
