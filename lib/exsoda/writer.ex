@@ -20,6 +20,7 @@ defmodule Exsoda.Writer do
 
   defmodule Upsert do
     defstruct fourfour: nil,
+    mode: nil,
     rows: []
   end
 
@@ -64,7 +65,12 @@ defmodule Exsoda.Writer do
 
   # a row looks like: {fieldName: value, fieldName: value}
   def upsert(%Write{} = w, fourfour, rows) do
-    operation = %Upsert{fourfour: fourfour, rows: rows}
+    operation = %Upsert{fourfour: fourfour, rows: rows, mode: :append}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def replace(%Write{} = w, fourfour, rows) do
+    operation = %Upsert{fourfour: fourfour, rows: rows, mode: :replace}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -112,7 +118,10 @@ defmodule Exsoda.Writer do
 
   defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
     with {:ok, json} <- Poison.encode(rows) do
-      Http.post("/id/#{u.fourfour}.json", w, json)
+      case u.mode do
+        :append -> Http.post("/id/#{u.fourfour}.json", w, json)
+        :replace -> Http.put("/id/#{u.fourfour}.json", w, json)
+      end
     end
   end
   defp do_run(%Upsert{rows: rows} = u, w) do
@@ -127,7 +136,10 @@ defmodule Exsoda.Writer do
     )
     |> Stream.concat(["]"])
 
-    Http.post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
+    case u.mode do
+      :append -> Http.post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
+      :replace -> Http.put("/id/#{u.fourfour}.json", w, {:stream, json_stream})
+    end
   end
 
   defp do_run(%Publish{fourfour: fourfour}, w) do
