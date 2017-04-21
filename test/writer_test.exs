@@ -261,12 +261,13 @@ defmodule ExsodaTest.Writer do
 
     [{:ok, %{"id" => id}}] = results
 
-    [{:ok, view}] = Writer.write()
+    [{:ok, _}] = Writer.write()
     |> Writer.prepare_draft_for_import(id)
     |> Writer.run
   end
 
   # This test requires being on the us-west-2 VPN to pass
+  @tag external: true
   test "can spoof a user during a write request" do
     spoofee_email = "test-viewer@socrata.com"
     spoof = %{
