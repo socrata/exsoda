@@ -8,6 +8,10 @@ defmodule Exsoda.Writer do
     properties: %{} # description, fieldName
   end
 
+  defmodule CreateColumns do
+    defstruct columns: []
+  end
+
   defmodule CreateView do
     defstruct name: nil,
     properties: %{}
@@ -108,11 +112,18 @@ defmodule Exsoda.Writer do
   end
 
   defp do_run(%CreateColumn{} = cc, w) do
-    data = Map.take(cc, [:dataTypeName, :name])
-    |> Map.merge(cc.properties)
+    data = merge_column(cc)
 
     with {:ok, json} <- Poison.encode(data) do
       Http.post("/views/#{cc.fourfour}/columns", w, json)
+    end
+  end
+
+  defp do_run(%CreateColumns{columns: ccs}, w) do
+    data = %{"columns" => Enum.map(ccs, &merge_column/1)}
+
+    with {:ok, json} <- Poison.encode(data) do
+      Http.post("/views/#{hd(ccs).fourfour}/columns?method=multiCreate", w, json)
     end
   end
 
@@ -160,8 +171,20 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defp merge_column(%CreateColumn{} = cc), do: Map.take(cc, [:dataTypeName, :name]) |> Map.merge(cc.properties)
+
+  defp collapse_column_create([]), do: []
+  defp collapse_column_create([%CreateColumn{fourfour: fourfour} = cc | ccs]) do
+    {ccs, remainder} = Enum.split_while(ccs, fn
+      %CreateColumn{fourfour: ^fourfour} -> true
+      _ -> false
+    end)
+    [%CreateColumns{columns: [cc | ccs]} | collapse_column_create(remainder)]
+  end
+  defp collapse_column_create([h | t]), do: [h | collapse_column_create(t)]
+
   def run(%Write{} = w) do
-    Enum.reduce_while(Enum.reverse(w.operations), [], fn op, acc ->
+    Enum.reduce_while(collapse_column_create(Enum.reverse(w.operations)), [], fn op, acc ->
         case do_run(op, w) do
           {:error, _} = err -> {:halt, [err | acc]}
           {:ok, _} = ok     -> {:cont, [ok  | acc]}
