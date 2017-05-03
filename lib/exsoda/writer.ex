@@ -123,7 +123,10 @@ defmodule Exsoda.Writer do
     data = %{"columns" => Enum.map(ccs, &merge_column/1)}
 
     with {:ok, json} <- Poison.encode(data) do
-      Http.post("/views/#{hd(ccs).fourfour}/columns?method=multiCreate", w, json)
+      case Http.post("/views/#{hd(ccs).fourfour}/columns?method=multiCreate", w, json) do
+        {:ok, list} -> Enum.map(list, fn result -> {:ok, result} end)
+        {:error, _} = err -> Enum.map(ccs, fn _ -> err end)
+      end
     end
   end
 
@@ -184,11 +187,16 @@ defmodule Exsoda.Writer do
   defp collapse_column_create([h | t]), do: [h | collapse_column_create(t)]
 
   def run(%Write{} = w) do
-    Enum.reduce_while(collapse_column_create(Enum.reverse(w.operations)), [], fn op, acc ->
-        case do_run(op, w) do
-          {:error, _} = err -> {:halt, [err | acc]}
-          {:ok, _} = ok     -> {:cont, [ok  | acc]}
+    w.operations
+    |> Enum.reverse
+    |> collapse_column_create
+    |> Enum.reduce_while([], fn op, acc ->
+      Enum.reduce_while(List.wrap(do_run(op, w)), {:cont, acc}, fn result, {_, acc} ->
+        case result do
+          {:error, _} = err -> {:halt, {:halt, [err | acc]}}
+          {:ok, _} = ok     -> {:cont, {:cont, [ok  | acc]}}
         end
+      end)
     end)
     |> Enum.reverse
   end
