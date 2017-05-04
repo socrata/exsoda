@@ -1,6 +1,8 @@
 defmodule Exsoda.Writer do
   alias Exsoda.Http
 
+  @column_create_optimization false
+
   defmodule CreateColumn do
     defstruct name: nil,
     dataTypeName: nil,
@@ -178,11 +180,15 @@ defmodule Exsoda.Writer do
 
   defp collapse_column_create([]), do: []
   defp collapse_column_create([%CreateColumn{fourfour: fourfour} = cc | ccs]) do
-    {ccs, remainder} = Enum.split_while(ccs, fn
-      %CreateColumn{fourfour: ^fourfour} -> true
-      _ -> false
-    end)
-    [%CreateColumns{columns: [cc | ccs]} | collapse_column_create(remainder)]
+    if @column_create_optimization do
+      {ccs, remainder} = Enum.split_while(ccs, fn
+        %CreateColumn{fourfour: ^fourfour} -> true
+        _ -> false
+      end)
+      [%CreateColumns{columns: [cc | ccs]} | collapse_column_create(remainder)]
+    else
+      [cc | ccs]
+    end
   end
   defp collapse_column_create([h | t]), do: [h | collapse_column_create(t)]
 
