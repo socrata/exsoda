@@ -20,6 +20,10 @@ defmodule Exsoda.AuthServer do
     GenServer.call(__MODULE__, {:get_cookie, opts})
   end
 
+  def list_cookies() do
+    GenServer.call(__MODULE__, :list_cookies)
+  end
+
   def clear_cookies() do
     GenServer.cast(__MODULE__, :clear_cookies)
   end
@@ -36,6 +40,10 @@ defmodule Exsoda.AuthServer do
       cookie ->
         {:reply, {:ok, cookie}, state}
     end
+  end
+
+  def handle_call(:list_cookies, _, %State{cookies: cookies} = state) do
+    {:reply, cookies, state}
   end
 
   def handle_cast(:clear_cookies, %State{} = state) do
