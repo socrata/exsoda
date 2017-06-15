@@ -46,7 +46,7 @@ defmodule Exsoda.Writer do
 
   defmodule PrepareDraftForImport do
     defstruct fourfour: nil,
-    nbe: nil
+      nbe: nil
   end
 
   def write(options \\ []) do
