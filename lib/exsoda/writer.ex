@@ -45,7 +45,8 @@ defmodule Exsoda.Writer do
   end
 
   defmodule PrepareDraftForImport do
-    defstruct fourfour: nil
+    defstruct fourfour: nil,
+    nbe: nil
   end
 
   def write(options \\ []) do
@@ -95,8 +96,8 @@ defmodule Exsoda.Writer do
     %{ w | operations: [operation | w.operations]}
   end
 
-  def prepare_draft_for_import(%Write{} = w, fourfour) do
-    operation = %PrepareDraftForImport{fourfour: fourfour}
+  def prepare_draft_for_import(%Write{} = w, fourfour, nbe \\ false) do
+    operation = %PrepareDraftForImport{fourfour: fourfour, nbe: nbe}
     %{ w | operations: [operation | w.operations]}
   end
 
@@ -170,9 +171,9 @@ defmodule Exsoda.Writer do
     end
   end
 
-  defp do_run(%PrepareDraftForImport{fourfour: fourfour}, w) do
+  defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
-      Http.patch("/views/#{fourfour}?method=prepareDraftForImport", w, json)
+      Http.patch("/views/#{fourfour}?method=prepareDraftForImport&nbe=#{nbe}", w, json)
     end
   end
 
