@@ -47,6 +47,15 @@ defmodule ExsodaTest.ConfigurationReader do
                                                                             value: %{"enabled" => true}},
                                                     %Configuration.Property{name: "fun",
                                                                             value: %{"enabled" => true}}],
-                                       type: "view_categories"}]
+                                       type: "view_categories"},
+                        %Configuration{id: 897,
+                                       name: "View categories",
+                                       properties: [%Exsoda.Configuration.Property{name: "education", value: %{"enabled" => true}},
+                                                    %Exsoda.Configuration.Property{name: "government", value: %{"enabled" => true}},
+                                                    %Exsoda.Configuration.Property{name: "business", value: %{"enabled" => true}},
+                                                    %Exsoda.Configuration.Property{name: "Hidden", value: %{"enabled" => false, "locale_strings" => %{"en" => "Hidden", "es" => ""}}},
+                                                    %Exsoda.Configuration.Property{name: "personal", value: %{"enabled" => true}},
+                                                    %Exsoda.Configuration.Property{name: "fun", value: %{"enabled" => true}}],
+                                      type: "view_categories"}]
   end
 end

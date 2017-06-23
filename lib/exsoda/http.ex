@@ -126,6 +126,7 @@ defmodule Exsoda.Http do
     1..len
     |> Enum.map(fn _ -> Enum.random(@valid) end)
     |> Enum.join("")
+    |> String.downcase
   end
 
   def options(user_opts) do
