@@ -14,6 +14,12 @@ defmodule Exsoda.Writer do
     defstruct columns: []
   end
 
+  defmodule DropColumn do
+    defstruct field_name: nil,
+    fourfour: nil,
+    properties: %{}
+  end
+
   defmodule CreateView do
     defstruct name: nil,
     properties: %{}
@@ -67,6 +73,11 @@ defmodule Exsoda.Writer do
 
   def create_column(%Write{} = w, fourfour, name, type, properties) do
     operation = %CreateColumn{name: name, dataTypeName: type, fourfour: fourfour, properties: properties}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def drop_column(%Write{} = w, fourfour, field_name, properties) do
+    operation = %DropColumn{field_name: field_name, fourfour: fourfour, properties: properties}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -131,6 +142,10 @@ defmodule Exsoda.Writer do
         {:error, _} = err -> Enum.map(ccs, fn _ -> err end)
       end
     end
+  end
+
+  defp do_run(%DropColumn{} = dc, w) do
+    Http.delete("/views/#{dc.fourfour}/columns/#{dc.field_name}", w)
   end
 
   defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do

@@ -170,6 +170,19 @@ defmodule Exsoda.Http do
     end
   end
 
+  def delete(path, op) do
+    with {:ok, base} <- base_url(op),
+         {:ok, http_options} <- http_opts(op) do
+      Logger.debug("Getting with request_id: #{op.opts.request_id}")
+      HTTPoison.delete(
+        "#{base}#{path}",
+        headers(op),
+        http_options
+      )
+      |> as_json
+    end
+  end
+
   def post(path, op, body) do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
