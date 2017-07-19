@@ -51,7 +51,6 @@ defmodule Exsoda.Http do
       spoofer_email: spoofer_email,
       spoofer_password: spoofer_password
     },
-    host: _host,
     domain: domain,
     request_id: request_id} = opts) do
     body = [{"username", "#{spoofee_email} #{spoofer_email}"}, {"password", "#{spoofer_password}"}]
@@ -76,7 +75,7 @@ defmodule Exsoda.Http do
     end
   end
 
-  defp get_cookie(opts) do
+  def get_cookie(opts) do
     case Process.whereis(Exsoda.AuthServer) do
       nil -> get_cookie_impl(opts)
       _ -> Exsoda.AuthServer.get_cookie(opts)
