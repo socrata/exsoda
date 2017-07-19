@@ -45,7 +45,7 @@ defmodule Exsoda.Http do
     ]
   end
 
-  defp get_cookie(%{
+  def get_cookie_impl(%{
     spoof: %{
       spoofee_email: spoofee_email,
       spoofer_email: spoofer_email,
@@ -73,6 +73,13 @@ defmodule Exsoda.Http do
     else
       {:ok, %HTTPoison.Response{} = non_200_resp} -> {:error, non_200_resp}
       other -> other
+    end
+  end
+
+  defp get_cookie(opts) do
+    case Process.whereis(Exsoda.AuthServer) do
+      nil -> get_cookie_impl(opts)
+      _ -> Exsoda.AuthServer.get_cookie(opts)
     end
   end
 
