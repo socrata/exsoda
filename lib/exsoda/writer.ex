@@ -41,6 +41,11 @@ defmodule Exsoda.Writer do
       operations: []
   end
 
+  defmodule Copy do
+    defstruct fourfour: nil,
+      copy_data: true
+  end
+
   defmodule Publish do
     defstruct fourfour: nil
   end
@@ -89,6 +94,11 @@ defmodule Exsoda.Writer do
 
   def replace(%Write{} = w, fourfour, rows) do
     operation = %Upsert{fourfour: fourfour, rows: rows, mode: :replace}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def copy(%Write{} = w, fourfour, copy_data \\ true) do
+    operation = %Copy{fourfour: fourfour, copy_data: copy_data}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -171,6 +181,18 @@ defmodule Exsoda.Writer do
     case u.mode do
       :append -> Http.post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
       :replace -> Http.put("/id/#{u.fourfour}.json", w, {:stream, json_stream})
+    end
+  end
+
+  defp do_run(%Copy{fourfour: fourfour, copy_data: copy_data}, w) do
+    with {:ok, json} <- Poison.encode(%{}) do
+      url =
+        if copy_data do
+          "/views/#{fourfour}/publication?method=copy"
+        else
+          "/views/#{fourfour}/publication?method=copySchema"
+        end
+      Http.post(url, w, json)
     end
   end
 
