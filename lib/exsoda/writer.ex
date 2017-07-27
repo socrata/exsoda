@@ -186,6 +186,11 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, w) do
+    with {:ok, json} <- Poison.encode(%{}) do
+      Http.patch("/views/#{fourfour}?method=prepareDraftForImport", w, json)
+    end
+  end
   defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
       Http.patch("/views/#{fourfour}?method=prepareDraftForImport&nbe=#{nbe}", w, json)
