@@ -36,6 +36,24 @@ defmodule Exsoda.Reader do
     end
   end
 
+  def get_unpublished_copy(%Query{fourfour: fourfour} = state) do
+    with {:ok, base} <- Http.base_url(state),
+         {:ok, options} <- Http.http_opts(state) do
+      "#{base}/views/#{fourfour}.json?method=getPublicationGroup&stage=unpublished"
+      |> HTTPoison.get(Http.headers(state), options)
+      |> Http.as_json
+    end
+  end
+
+  def get_published_copy(%Query{fourfour: fourfour} = state) do
+    with {:ok, base} <- Http.base_url(state),
+         {:ok, options} <- Http.http_opts(state) do
+      "#{base}/views/#{fourfour}.json?method=getPublicationGroup&stage=published"
+      |> HTTPoison.get(Http.headers(state), options)
+      |> Http.as_json
+    end
+  end
+
   defp get_columns(query) do
     with {:ok, view} <- get_view(query) do
       view_columns(view)

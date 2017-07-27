@@ -41,6 +41,11 @@ defmodule Exsoda.Writer do
       operations: []
   end
 
+  defmodule Copy do
+    defstruct fourfour: nil,
+      copy_data: true
+  end
+
   defmodule Publish do
     defstruct fourfour: nil
   end
@@ -89,6 +94,11 @@ defmodule Exsoda.Writer do
 
   def replace(%Write{} = w, fourfour, rows) do
     operation = %Upsert{fourfour: fourfour, rows: rows, mode: :replace}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def copy(%Write{} = w, fourfour, copy_data \\ true) do
+    operation = %Copy{fourfour: fourfour, copy_data: copy_data}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -174,6 +184,18 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defp do_run(%Copy{fourfour: fourfour, copy_data: copy_data}, w) do
+    with {:ok, json} <- Poison.encode(%{}) do
+      url =
+        if copy_data do
+          "/views/#{fourfour}/publication?method=copy"
+        else
+          "/views/#{fourfour}/publication?method=copySchema"
+        end
+      Http.post(url, w, json)
+    end
+  end
+
   defp do_run(%Publish{fourfour: fourfour}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
       Http.post("/views/#{fourfour}/publication", w, json)
@@ -186,6 +208,11 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, w) do
+    with {:ok, json} <- Poison.encode(%{}) do
+      Http.patch("/views/#{fourfour}?method=prepareDraftForImport", w, json)
+    end
+  end
   defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
       Http.patch("/views/#{fourfour}?method=prepareDraftForImport&nbe=#{nbe}", w, json)

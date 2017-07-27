@@ -199,8 +199,46 @@ defmodule Exsoda.Http do
         headers(op),
         http_options
       )
-      |> as_json
+      |> maybe_202(path, op, fn -> post(path, op, body) end)
     end
+  end
+
+  defp poll202(path, op, ticket, redo) do
+    :timer.sleep(10000) # should this be configurable?
+
+    with {:ok, base} <- base_url(op),
+         {:ok, http_options} <- http_opts(op) do
+      Logger.debug("Polling a 202 with request_id: #{op.opts.request_id} and ticket #{ticket}")
+
+      if ticket do
+        unticketed_url = "#{base}#{path}"
+        sep = if String.contains?(unticketed_url, "?") do "&" else "?" end
+        url = "#{unticketed_url}#{sep}ticket=#{ticket}"
+
+        HTTPoison.get(
+          url,
+          headers(op),
+          http_options
+        ) |> maybe_202(path, op, redo)
+      else
+        redo.()
+      end
+
+    end
+  end
+
+  defp maybe_202({:ok, %Response{body: body, status_code: 202}}, path, op, redo) do
+    case Poison.decode(body) do
+      {:ok, %{"ticket" => ticket}} ->
+        poll202(path, op, ticket, redo)
+      {:ok, _} ->
+        poll202(path, op, nil, redo)
+      other ->
+        other
+    end
+  end
+  defp maybe_202(resp, _path, _op, _redo) do
+    as_json(resp)
   end
 
   def put(path, op, body) do
