@@ -10,6 +10,12 @@ defmodule Exsoda.Writer do
     properties: %{} # description, fieldName
   end
 
+  defmodule UpdateColumn do
+    defstruct fieldName: nil,
+      fourfour: nil,
+      properties: %{} # description, fieldName
+  end
+
   defmodule CreateColumns do
     defstruct columns: []
   end
@@ -78,6 +84,11 @@ defmodule Exsoda.Writer do
 
   def create_column(%Write{} = w, fourfour, name, type, properties) do
     operation = %CreateColumn{name: name, dataTypeName: type, fourfour: fourfour, properties: properties}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def update_column(%Write{} = w, fourfour, field_name, properties) do
+    operation = %UpdateColumn{fourfour: fourfour, fieldName: field_name, properties: properties}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -151,6 +162,13 @@ defmodule Exsoda.Writer do
         {:ok, list} -> Enum.map(list, fn result -> {:ok, result} end)
         {:error, _} = err -> Enum.map(ccs, fn _ -> err end)
       end
+    end
+  end
+
+  defp do_run(%UpdateColumn{} = cc, w) do
+    data = Map.merge(cc.properties, Map.take(cc, [:fieldName]))
+    with {:ok, json} <- Poison.encode(data) do
+      Http.put("/views/#{cc.fourfour}/columns/#{cc.fieldName}", w, json)
     end
   end
 
