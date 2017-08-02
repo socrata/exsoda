@@ -248,7 +248,7 @@ defmodule Exsoda.Http do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
       Logger.debug("Putting with request_id: #{op.opts.request_id}")
-      response = HTTPoison.put(
+      HTTPoison.put(
         "#{base}#{path}",
         body,
         headers(op),
@@ -262,7 +262,7 @@ defmodule Exsoda.Http do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
       Logger.debug("Patching with request_id: #{op.opts.request_id}")
-      response = HTTPoison.patch(
+      HTTPoison.patch(
         "#{base}#{path}",
         body,
         headers(op),
