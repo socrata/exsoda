@@ -60,7 +60,7 @@ defmodule Exsoda.AuthServer do
     {:noreply, %State{state | pending: Map.delete(pending, worker)}}
   end
 
-  def handle_cast({:DOWN, _ref, _type, pid, info}, %State{pending: pending} = state) do
+  def handle_info({:DOWN, _ref, _type, pid, info}, %State{pending: pending} = state) do
     case Map.get(pending, pid) do
       nil ->
         {:noreply, state}
