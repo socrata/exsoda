@@ -3,7 +3,16 @@ defmodule ExsodaTest.Writer do
   alias Exsoda.Config
   alias Exsoda.Writer
   alias Exsoda.Reader
-  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn, Permission, Publish, PrepareDraftForImport}
+  alias Exsoda.Writer.{
+    CreateView,
+    UpdateView,
+    CreateColumn,
+    Permission,
+    Publish,
+    PrepareDraftForImport,
+    SetBlobForDraft,
+    ReplaceBlob
+  }
 
   test "can create a create_view operation" do
     w = Writer.write()
@@ -319,7 +328,18 @@ defmodule ExsodaTest.Writer do
     |> Writer.set_blob_for_draft("meow-meow", "/path/to/file.jpg")
 
     assert w.operations == [
-      %PrepareDraftForImport{
+      %SetBlobForDraft{
+        fourfour: "meow-meow",
+        file_path: "/path/to/file.jpg"
+      }]
+  end
+
+  test "can create a replaceBlob operation" do
+    w = Writer.write()
+    |> Writer.replace_blob("meow-meow", "/path/to/file.jpg")
+
+    assert w.operations == [
+      %ReplaceBlob{
         fourfour: "meow-meow",
         file_path: "/path/to/file.jpg"
       }]

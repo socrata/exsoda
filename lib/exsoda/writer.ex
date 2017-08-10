@@ -71,6 +71,11 @@ defmodule Exsoda.Writer do
     file_path: nil
   end
 
+  defmodule ReplaceBlob do
+    defstruct fourfour: nil,
+    file_path: nil
+  end
+
   def write(options \\ []) do
     %Write{
       opts: Http.options(options)
@@ -140,6 +145,11 @@ defmodule Exsoda.Writer do
 
   def set_blob_for_draft(%Write{} = w, fourfour, file_path) do
     operation = %SetBlobForDraft{fourfour: fourfour, file_path: file_path}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def replace_blob(%Write{} = w, fourfour, file_path) do
+    operation = %ReplaceBlob{fourfour: fourfour, file_path: file_path}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -250,8 +260,12 @@ defmodule Exsoda.Writer do
   defp do_run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, w) do
     body = {:multipart, [file: file_path]}
     url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{fourfour}"
-    IO.inspect {:url, url}
-    IO.inspect {:body, body}
+    Http.post(url, w, body)
+  end
+
+  defp do_run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, w) do
+    body = {:multipart, [file: file_path]}
+    url = "/views/#{fourfour}?method=replaceBlob"
     Http.post(url, w, body)
   end
 
