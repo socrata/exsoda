@@ -314,6 +314,17 @@ defmodule ExsodaTest.Writer do
       }]
   end
 
+  test "can create a SetBlobForDraft operation" do
+    w = Writer.write()
+    |> Writer.set_blob_for_draft("meow-meow", "/path/to/file.jpg")
+
+    assert w.operations == [
+      %PrepareDraftForImport{
+        fourfour: "meow-meow",
+        file_path: "/path/to/file.jpg"
+      }]
+  end
+
   # This test requires being on the us-west-2 VPN to pass
   test "running PrepareDraftForImport succeeds" do
     results = Writer.write()
