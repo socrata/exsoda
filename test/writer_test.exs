@@ -346,6 +346,7 @@ defmodule ExsodaTest.Writer do
   end
 
   # This test requires being on the us-west-2 VPN to pass
+  @tag external: true
   test "running PrepareDraftForImport succeeds" do
     results = Writer.write()
     |> Writer.create("a name", %{description: "describes", displayType: "draft"})
