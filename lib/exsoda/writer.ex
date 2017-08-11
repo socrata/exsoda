@@ -66,6 +66,16 @@ defmodule Exsoda.Writer do
       nbe: nil
   end
 
+  defmodule SetBlobForDraft do
+    defstruct fourfour: nil,
+    file_path: nil
+  end
+
+  defmodule ReplaceBlob do
+    defstruct fourfour: nil,
+    file_path: nil
+  end
+
   def write(options \\ []) do
     %Write{
       opts: Http.options(options)
@@ -115,22 +125,32 @@ defmodule Exsoda.Writer do
 
   def publish(%Write{} = w, fourfour) do
     operation = %Publish{fourfour: fourfour}
-    %{ w | operations: [operation | w.operations]}
+    %{ w | operations: [operation | w.operations] }
   end
 
   def permission(%Write{} = w, fourfour, :public) do
     operation = %Permission{fourfour: fourfour, mode: "public.read"}
-    %{ w | operations: [operation | w.operations]}
+    %{ w | operations: [operation | w.operations] }
   end
 
   def permission(%Write{} = w, fourfour, :private) do
     operation = %Permission{fourfour: fourfour, mode: "private"}
-    %{ w | operations: [operation | w.operations]}
+    %{ w | operations: [operation | w.operations] }
   end
 
   def prepare_draft_for_import(%Write{} = w, fourfour, nbe \\ false) do
     operation = %PrepareDraftForImport{fourfour: fourfour, nbe: nbe}
-    %{ w | operations: [operation | w.operations]}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def set_blob_for_draft(%Write{} = w, fourfour, file_path) do
+    operation = %SetBlobForDraft{fourfour: fourfour, file_path: file_path}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def replace_blob(%Write{} = w, fourfour, file_path) do
+    operation = %ReplaceBlob{fourfour: fourfour, file_path: file_path}
+    %{ w | operations: [operation | w.operations] }
   end
 
   defp do_run(%CreateView{} = cv, w) do
@@ -235,6 +255,18 @@ defmodule Exsoda.Writer do
     with {:ok, json} <- Poison.encode(%{}) do
       Http.patch("/views/#{fourfour}?method=prepareDraftForImport&nbe=#{nbe}", w, json)
     end
+  end
+
+  defp do_run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, w) do
+    body = {:multipart, [file: file_path]}
+    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{fourfour}"
+    Http.post(url, w, body)
+  end
+
+  defp do_run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, w) do
+    body = {:multipart, [file: file_path]}
+    url = "/views/#{fourfour}?method=replaceBlob"
+    Http.post(url, w, body)
   end
 
   defp merge_column(%CreateColumn{} = cc), do: Map.take(cc, [:dataTypeName, :name]) |> Map.merge(cc.properties)

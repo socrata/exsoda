@@ -3,7 +3,16 @@ defmodule ExsodaTest.Writer do
   alias Exsoda.Config
   alias Exsoda.Writer
   alias Exsoda.Reader
-  alias Exsoda.Writer.{CreateView, UpdateView, CreateColumn, Permission, Publish, PrepareDraftForImport}
+  alias Exsoda.Writer.{
+    CreateView,
+    UpdateView,
+    CreateColumn,
+    Permission,
+    Publish,
+    PrepareDraftForImport,
+    SetBlobForDraft,
+    ReplaceBlob
+  }
 
   test "can create a create_view operation" do
     w = Writer.write()
@@ -314,7 +323,30 @@ defmodule ExsodaTest.Writer do
       }]
   end
 
+  test "can create a SetBlobForDraft operation" do
+    w = Writer.write()
+    |> Writer.set_blob_for_draft("meow-meow", "/path/to/file.jpg")
+
+    assert w.operations == [
+      %SetBlobForDraft{
+        fourfour: "meow-meow",
+        file_path: "/path/to/file.jpg"
+      }]
+  end
+
+  test "can create a replaceBlob operation" do
+    w = Writer.write()
+    |> Writer.replace_blob("meow-meow", "/path/to/file.jpg")
+
+    assert w.operations == [
+      %ReplaceBlob{
+        fourfour: "meow-meow",
+        file_path: "/path/to/file.jpg"
+      }]
+  end
+
   # This test requires being on the us-west-2 VPN to pass
+  @tag external: true
   test "running PrepareDraftForImport succeeds" do
     results = Writer.write()
     |> Writer.create("a name", %{description: "describes", displayType: "draft"})
