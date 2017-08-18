@@ -20,7 +20,19 @@ defmodule ExsodaTest.Writer do
 
     assert w.operations == [%CreateView{
       name: "a name",
-      properties: %{description: "describes"}
+      properties: %{description: "describes"},
+      validate_only: false
+    }]
+  end
+
+  test "can create a create_view operation that only validates" do
+    w = Writer.write()
+    |> Writer.create("a name", %{description: "describes"}, true)
+
+    assert w.operations == [%CreateView{
+      name: "a name",
+      properties: %{description: "describes"},
+      validate_only: true
     }]
   end
 
