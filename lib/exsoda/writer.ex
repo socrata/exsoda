@@ -28,7 +28,8 @@ defmodule Exsoda.Writer do
 
   defmodule CreateView do
     defstruct name: nil,
-    properties: %{}
+    properties: %{},
+    validate_only: nil
   end
 
   defmodule UpdateView do
@@ -82,8 +83,8 @@ defmodule Exsoda.Writer do
     }
   end
 
-  def create(%Write{} = w, name, properties) do
-    operation = %CreateView{name: name, properties: properties}
+  def create(%Write{} = w, name, properties, validate_only \\ false) do
+    operation = %CreateView{name: name, properties: properties, validate_only: validate_only}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -153,10 +154,16 @@ defmodule Exsoda.Writer do
     %{ w | operations: [operation | w.operations] }
   end
 
-  defp do_run(%CreateView{} = cv, w) do
+  defp do_run(%CreateView{validate_only: nil} = cv, w) do
     data = Map.merge(cv.properties, %{name: cv.name})
     with {:ok, json} <- Poison.encode(data) do
       Http.post("/views.json", w, json)
+    end
+  end
+  defp do_run(%CreateView{validate_only: validate_only} = cv, w) do
+    data = Map.merge(cv.properties, %{name: cv.name})
+    with {:ok, json} <- Poison.encode(data) do
+      Http.post("/views.json?validateOnly=#{validate_only}", w, json)
     end
   end
 
