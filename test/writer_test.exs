@@ -20,19 +20,7 @@ defmodule ExsodaTest.Writer do
 
     assert w.operations == [%CreateView{
       name: "a name",
-      properties: %{description: "describes"},
-      validate_only: false
-    }]
-  end
-
-  test "can create a create_view operation that only validates" do
-    w = Writer.write()
-    |> Writer.create("a name", %{description: "describes"}, true)
-
-    assert w.operations == [%CreateView{
-      name: "a name",
-      properties: %{description: "describes"},
-      validate_only: true
+      properties: %{description: "describes"}
     }]
   end
 
@@ -63,11 +51,12 @@ defmodule ExsodaTest.Writer do
 
   test "can create an UpdateView operation" do
     w = Writer.write()
-    |> Writer.update("meow-meow", %{description: "describes"})
+    |> Writer.update("meow-meow", %{description: "describes"}, false)
 
     assert w.operations == [%UpdateView{
       fourfour: "meow-meow",
-      properties: %{description: "describes"}
+      properties: %{description: "describes"},
+      validate_only: false
     }]
   end
 
@@ -77,7 +66,7 @@ defmodule ExsodaTest.Writer do
     |> Writer.run
 
     results = Writer.write()
-    |> Writer.update(fourfour, %{description: "does not describe"})
+    |> Writer.update(fourfour, %{description: "does not describe"}, false)
     |> Writer.run
 
     assert [{:ok, _}] = results
@@ -86,6 +75,17 @@ defmodule ExsodaTest.Writer do
     |> Reader.get_view
 
     assert "does not describe" == Map.get(view, "description", nil)
+  end
+
+  test "can create an UpdateView operation that only validates" do
+    w = Writer.write()
+    |> Writer.update("bark-bark", %{description: "describes"}, true)
+
+    assert w.operations == [%UpdateView{
+      fourfour: "bark-bark",
+      properties: %{description: "describes"},
+      validate_only: true
+    }]
   end
 
   test "can create a CreateColumn operation" do

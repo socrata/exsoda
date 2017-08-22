@@ -28,13 +28,13 @@ defmodule Exsoda.Writer do
 
   defmodule CreateView do
     defstruct name: nil,
-    properties: %{},
-    validate_only: nil
+    properties: %{}
   end
 
   defmodule UpdateView do
     defstruct fourfour: nil,
-    properties: %{}
+    properties: %{},
+    validate_only: nil
   end
 
   defmodule Upsert do
@@ -83,13 +83,13 @@ defmodule Exsoda.Writer do
     }
   end
 
-  def create(%Write{} = w, name, properties, validate_only \\ false) do
-    operation = %CreateView{name: name, properties: properties, validate_only: validate_only}
+  def create(%Write{} = w, name, properties) do
+    operation = %CreateView{name: name, properties: properties}
     %{ w | operations: [operation | w.operations] }
   end
 
-  def update(%Write{} = w, fourfour, properties) do
-    operation = %UpdateView{fourfour: fourfour, properties: properties}
+  def update(%Write{} = w, fourfour, properties, validate_only \\ false) do
+    operation = %UpdateView{fourfour: fourfour, properties: properties, validate_only: validate_only}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -154,22 +154,21 @@ defmodule Exsoda.Writer do
     %{ w | operations: [operation | w.operations] }
   end
 
-  defp do_run(%CreateView{validate_only: nil} = cv, w) do
+  defp do_run(%CreateView{} = cv, w) do
     data = Map.merge(cv.properties, %{name: cv.name})
     with {:ok, json} <- Poison.encode(data) do
       Http.post("/views.json", w, json)
     end
   end
-  defp do_run(%CreateView{validate_only: validate_only} = cv, w) do
-    data = Map.merge(cv.properties, %{name: cv.name})
-    with {:ok, json} <- Poison.encode(data) do
-      Http.post("/views.json?validateOnly=#{validate_only}", w, json)
-    end
-  end
 
-  defp do_run(%UpdateView{} = uv, w) do
+  defp do_run(%UpdateView{validate_only: nil} = uv, w) do
     with {:ok, json} <- Poison.encode(uv.properties) do
       Http.put("/views/#{uv.fourfour}.json", w, json)
+    end
+  end
+  defp do_run(%UpdateView{validate_only: validate_only} = uv, w) do
+    with {:ok, json} <- Poison.encode(uv.properties) do
+      Http.put("/views/#{uv.fourfour}.json?validateOnly=#{validate_only}", w, json)
     end
   end
 
