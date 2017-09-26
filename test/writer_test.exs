@@ -345,15 +345,31 @@ defmodule ExsodaTest.Writer do
         file_path: "/path/to/file.jpg"
       }]
   end
-
-  test "can create a replaceBlob operation" do
+  test "can create a SetBlobForDraft operation with a byte stream" do
+    byte_stream = File.stream!("/path/to/file.jpg", [], 20)
+    filename = "filename.jpg"
     w = Writer.write()
-    |> Writer.replace_blob("meow-meow", "/path/to/file.jpg")
+    |> Writer.set_blob_for_draft("meow-meow", byte_stream, filename)
+
+    assert w.operations == [
+      %SetBlobForDraft{
+        fourfour: "meow-meow",
+        byte_stream: byte_stream,
+        filename: filename
+      }]
+  end
+
+  test "can create a replaceBlob operation with a byte stream" do
+    byte_stream = File.stream!("/path/to/file.jpg", [], 20)
+    filename = "filename.jpg"
+    w = Writer.write()
+    |> Writer.replace_blob("meow-meow",  byte_stream, filename)
 
     assert w.operations == [
       %ReplaceBlob{
         fourfour: "meow-meow",
-        file_path: "/path/to/file.jpg"
+        byte_stream: byte_stream,
+        filename: filename
       }]
   end
 

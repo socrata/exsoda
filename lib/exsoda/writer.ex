@@ -69,12 +69,16 @@ defmodule Exsoda.Writer do
 
   defmodule SetBlobForDraft do
     defstruct fourfour: nil,
-    file_path: nil
+    filename: nil,
+    file_path: nil,
+    byte_stream: nil
   end
 
   defmodule ReplaceBlob do
     defstruct fourfour: nil,
-    file_path: nil
+    filename: nil,
+    file_path: nil,
+    byte_stream: nil
   end
 
   def write(options \\ []) do
@@ -144,13 +148,21 @@ defmodule Exsoda.Writer do
     %{ w | operations: [operation | w.operations] }
   end
 
-  def set_blob_for_draft(%Write{} = w, fourfour, file_path) do
+  def set_blob_for_draft(%Write{} = w, fourfour, file_path) when is_binary(file_path) do
     operation = %SetBlobForDraft{fourfour: fourfour, file_path: file_path}
     %{ w | operations: [operation | w.operations] }
   end
+  def set_blob_for_draft(%Write{} = w, fourfour, byte_stream, filename) when is_map(byte_stream) do
+    operation = %SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}
+    %{ w | operations: [operation | w.operations] }
+  end
 
-  def replace_blob(%Write{} = w, fourfour, file_path) do
+  def replace_blob(%Write{} = w, fourfour, file_path) when is_binary(file_path) do
     operation = %ReplaceBlob{fourfour: fourfour, file_path: file_path}
+    %{ w | operations: [operation | w.operations] }
+  end
+  def replace_blob(%Write{} = w, fourfour, byte_stream, filename) when is_map(byte_stream) do
+    operation = %ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -263,12 +275,24 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defp do_run(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
+    body = {:stream, byte_stream}
+    headers = [{"Content-Type", "application/octet-stream"}, {"X-File-Name", filename}]
+    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{fourfour}"
+    Http.post(url, w, body)
+  end
   defp do_run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, w) do
     body = {:multipart, [file: file_path]}
     url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{fourfour}"
     Http.post(url, w, body)
   end
 
+  defp do_run(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
+    body = {:stream, byte_stream}
+    headers = [{"Content-Type", "application/octet-stream"}, {"X-File-Name", filename}]
+    url = "/views/#{fourfour}?method=replaceBlob"
+    Http.post(url, w, body)
+  end
   defp do_run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, w) do
     body = {:multipart, [file: file_path]}
     url = "/views/#{fourfour}?method=replaceBlob"
