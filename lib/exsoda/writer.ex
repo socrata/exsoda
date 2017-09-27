@@ -277,9 +277,10 @@ defmodule Exsoda.Writer do
 
   defp do_run(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
     body = {:stream, byte_stream}
-    headers = [{"Content-Type", "application/octet-stream"}, {"X-File-Name", filename}]
+    headers = %{content_type: "application/octet-stream", filename: filename}
+    ops = %{opts: Map.merge(w.opts, headers)}
     url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{fourfour}"
-    Http.post(url, w, body)
+    Http.post(url, ops, body)
   end
   defp do_run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, w) do
     body = {:multipart, [file: file_path]}
@@ -289,9 +290,10 @@ defmodule Exsoda.Writer do
 
   defp do_run(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
     body = {:stream, byte_stream}
-    headers = [{"Content-Type", "application/octet-stream"}, {"X-File-Name", filename}]
+    headers = %{content_type: "application/octet-stream", filename: filename}
+    ops = %{opts: Map.merge(w.opts, headers)}
     url = "/views/#{fourfour}?method=replaceBlob"
-    Http.post(url, w, body)
+    Http.post(url, ops, body)
   end
   defp do_run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, w) do
     body = {:multipart, [file: file_path]}

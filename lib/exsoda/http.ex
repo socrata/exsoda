@@ -36,13 +36,18 @@ defmodule Exsoda.Http do
     {:ok, make_url(domain, api_root, protocol)}
   end
 
-  def headers(%{opts: %{domain: domain, user_agent: user_agent, request_id: request_id}}) do
-    [
+  def headers(%{opts: %{domain: domain, user_agent: user_agent, request_id: request_id} = opts}) do
+
+    headers = [
       {"User-Agent", user_agent},
-      {"Content-Type", "application/json"},
+      {"Content-Type", Map.get(opts, :content_type, "application/json")},
       {"X-Socrata-Host", domain},
       {"X-Socrata-RequestId", request_id}
     ]
+    case Map.get(opts, :filename) do
+      nil -> headers
+      filename -> [ {"X-File-Name", filename} | headers ]
+    end
   end
 
   def get_cookie_impl(%{
