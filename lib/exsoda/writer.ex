@@ -67,6 +67,10 @@ defmodule Exsoda.Writer do
       nbe: nil
   end
 
+  defmodule PrepareDraftForHref do
+    defstruct fourfour: nil
+  end
+
   defmodule SetBlobForDraft do
     defstruct fourfour: nil,
     filename: nil,
@@ -145,6 +149,11 @@ defmodule Exsoda.Writer do
 
   def prepare_draft_for_import(%Write{} = w, fourfour, nbe \\ false) do
     operation = %PrepareDraftForImport{fourfour: fourfour, nbe: nbe}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def prepare_draft_for_href(%Write{} = w, fourfour) do
+    operation = %PrepareDraftForHref{fourfour: fourfour}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -272,6 +281,12 @@ defmodule Exsoda.Writer do
   defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
       Http.patch("/views/#{fourfour}?method=prepareDraftForImport&nbe=#{nbe}", w, json)
+    end
+  end
+
+  defp do_run(%PrepareDraftForHref{fourfour: fourfour}, w) do
+    with {:ok, json} <- Poison.encode(%{}) do
+      Http.patch("/views/#{fourfour}?method=prepareDraftForHref", w, json)
     end
   end
 
