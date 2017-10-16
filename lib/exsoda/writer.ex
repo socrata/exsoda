@@ -313,7 +313,7 @@ defmodule Exsoda.Writer do
   defp do_run(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
     body = {:stream, byte_stream}
     headers = %{content_type: "application/octet-stream", filename: filename}
-    ops = %{opts: Map.merge(w.opts, headers) |> IO.inspect}
+    ops = %{opts: Map.merge(w.opts, headers)}
     url = "/views/#{fourfour}/files.txt"
     Http.post(url, ops, body)
   end
