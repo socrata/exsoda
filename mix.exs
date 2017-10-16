@@ -3,7 +3,7 @@ defmodule Exsoda.Mixfile do
 
   def project do
     [app: :exsoda,
-     version: "1.2.27",
+     version: "1.2.28",
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
