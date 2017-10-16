@@ -11,7 +11,8 @@ defmodule ExsodaTest.Writer do
     Publish,
     PrepareDraftForImport,
     SetBlobForDraft,
-    ReplaceBlob
+    ReplaceBlob,
+    UploadAttachment
   }
 
   test "can create a create_view operation" do
@@ -367,6 +368,20 @@ defmodule ExsodaTest.Writer do
 
     assert w.operations == [
       %ReplaceBlob{
+        fourfour: "meow-meow",
+        byte_stream: byte_stream,
+        filename: filename
+      }]
+  end
+
+  test "can create an attachment with a byte stream" do
+    byte_stream = File.stream!("/path/to/file.jpg", [], 20)
+    filename = "filename.jpg"
+    w = Writer.write()
+    |> Writer.upload_attachment("meow-meow",  byte_stream, filename)
+
+    assert w.operations == [
+      %UploadAttachment{
         fourfour: "meow-meow",
         byte_stream: byte_stream,
         filename: filename

@@ -81,6 +81,10 @@ defmodule Exsoda.Writer do
     byte_stream: nil
   end
 
+  defmodule UploadAttachment do
+    defstruct [:fourfour, :byte_stream, :filename]
+  end
+
   def write(options \\ []) do
     %Write{
       opts: Http.options(options)
@@ -164,6 +168,11 @@ defmodule Exsoda.Writer do
   def replace_blob(%Write{} = w, fourfour, byte_stream, filename) when is_map(byte_stream) do
     operation = %ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}
     %{ w | operations: [operation | w.operations] }
+  end
+
+  def upload_attachment(%Write{} = w, fourfour, byte_stream, filename) do
+    operation = %UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}
+    %{w | operations: [operation | w.operations]}
   end
 
   defp do_run(%CreateView{} = cv, w) do
@@ -299,6 +308,14 @@ defmodule Exsoda.Writer do
     body = {:multipart, [file: file_path]}
     url = "/views/#{fourfour}?method=replaceBlob"
     Http.post(url, w, body)
+  end
+
+  defp do_run(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
+    body = {:stream, byte_stream}
+    headers = %{content_type: "application/octet-stream", filename: filename}
+    ops = %{opts: Map.merge(w.opts, headers)}
+    url = "/views/#{fourfour}/files.txt"
+    Http.post(url, ops, body)
   end
 
   defp merge_column(%CreateColumn{} = cc), do: Map.take(cc, [:dataTypeName, :name]) |> Map.merge(cc.properties)
