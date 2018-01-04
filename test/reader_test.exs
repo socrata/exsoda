@@ -2,7 +2,7 @@ defmodule ExsodaTest.Reader do
   use ExUnit.Case, async: true
   import Exsoda.Reader
   alias Exsoda.Config
-
+  alias HTTPoison.Response
 
   defp expected_state(query) do
     %Exsoda.Reader.Query{
@@ -157,16 +157,16 @@ defmodule ExsodaTest.Reader do
     result = Enum.into(stream, [])
 
     assert result == [
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", 4.6}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", 4.6}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", 4.6}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", 4.6}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", 4.6}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", 5.6}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", 5.6}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", 5.6}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", 5.6}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", 5.6}]
+      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
+      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
+      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
+      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
+      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
+      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
+      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
+      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
+      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
+      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}]
     ]
   end
 
@@ -199,7 +199,7 @@ defmodule ExsodaTest.Reader do
 
   @tag timeout: 10_000
   test "can get a view" do
-    {:ok, view} = query("upuy-x277")
+    {:ok, %Response{body: view}} = query("upuy-x277")
     |> get_view
 
     assert view["id"] == "upuy-x277"

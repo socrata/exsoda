@@ -3,6 +3,7 @@ defmodule ExsodaTest.ConfigurationReader do
   alias Exsoda.Config
   alias Exsoda.ConfigurationReader
   alias Exsoda.Configuration
+  alias HTTPoison.Response
 
   defp expected_state(query) do
     %ConfigurationReader.Query{
@@ -31,11 +32,11 @@ defmodule ExsodaTest.ConfigurationReader do
   end
 
   test "can query a config" do
-    [ok: response] = ConfigurationReader.query
+    [ok: %Response{body: body}] = ConfigurationReader.query
     |> ConfigurationReader.get_config("view_categories", %ConfigurationReader.GetConfig{merge: true})
     |> ConfigurationReader.run
 
-    assert response == [%Configuration{id: 1,
+    assert body == [%Configuration{id: 1,
                                        name: "View categories",
                                        properties: [%Configuration.Property{name: "government",
                                                                             value: %{"enabled" => true}},

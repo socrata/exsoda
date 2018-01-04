@@ -156,19 +156,21 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :timeout, 5_000)
   end
 
-  def as_json(result, json_opts \\ [])
+  def as_json(result), do: as_json(result, [])
 
+  # Core sometimes gives back empty responses
   def as_json({:ok, %Response{body: "", status_code: status}}, _json_opts) when (status >= 200) and (status < 300)  do
     {:ok, nil}
   end
-  def as_json({:ok, %Response{body: body, status_code: status}}, json_opts) when (status >= 200) and (status < 300)  do
-    Poison.decode(body, json_opts)
+  # Parse the body as json, return an error if we can't parse it
+  def as_json({:ok, %Response{body: body, status_code: status} = resp}, json_opts) when (status >= 200) and (status < 300)  do
+    with {:ok, body} <- Poison.decode(body, json_opts) do
+      {:ok, %{resp | body: body}}
+    end
   end
-
-  def as_json({:ok, bad_status}, _json_opts) do
-    {:error, bad_status}
-  end
-
+  # Convert bad statuses to error tuples
+  def as_json({:ok, bad_status}, _json_opts), do: {:error, bad_status}
+  # Leave connection errors unchanged
   def as_json(error, _json_opts), do: error
 
   def get(path, op) do
