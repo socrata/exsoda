@@ -29,6 +29,16 @@ defmodule Exsoda.Http do
       {:ok, make_url(host_str, api_root, protocol)}
     end
   end
+  def base_url(%{opts: %{
+      host: {module, func, args},
+      api_root: api_root,
+      protocol: protocol
+    }}) do
+    with {:ok, host_str} <- apply(module, func, args) do
+      {:ok, make_url(host_str, api_root, protocol)}
+    end
+  end
+
   def base_url(%{opts: %{host: host, api_root: api_root, protocol: protocol}}) do
     {:ok, make_url(host, api_root, protocol)}
   end
