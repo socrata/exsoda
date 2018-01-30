@@ -213,8 +213,7 @@ defmodule Exsoda.Writer do
   end
 
   defp do_run(%UpdateColumn{} = cc, w) do
-    data = Map.merge(cc.properties, Map.take(cc, [:fieldName]))
-    with {:ok, json} <- Poison.encode(data) do
+    with {:ok, json} <- Poison.encode(cc.properties) do
       Http.put("/views/#{cc.fourfour}/columns/#{cc.fieldName}", w, json)
     end
   end
