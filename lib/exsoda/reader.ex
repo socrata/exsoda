@@ -30,7 +30,7 @@ defmodule Exsoda.Reader do
   def get_view(%Query{fourfour: fourfour} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/views/#{fourfour}.json"
+      "#{base}/views/#{Http.encode(fourfour)}.json"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
@@ -39,7 +39,7 @@ defmodule Exsoda.Reader do
   def get_unpublished_copy(%Query{fourfour: fourfour} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/views/#{fourfour}.json?method=getPublicationGroup&stage=unpublished"
+      "#{base}/views/#{Http.encode(fourfour)}.json?method=getPublicationGroup&stage=unpublished"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
@@ -48,7 +48,7 @@ defmodule Exsoda.Reader do
   def get_published_copy(%Query{fourfour: fourfour} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/views/#{fourfour}.json?method=getPublicationGroup&stage=published"
+      "#{base}/views/#{Http.encode(fourfour)}.json?method=getPublicationGroup&stage=published"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
@@ -67,7 +67,7 @@ defmodule Exsoda.Reader do
 
       query = URI.encode_query(state.query)
 
-      stream = "#{base}/id/#{state.fourfour}.csv?#{query}"
+      stream = "#{base}/id/#{Http.encode(state.fourfour)}.csv?#{query}"
       |> HTTPoison.get(Http.headers(state), [{:stream_to, self()} | options])
       |> as_line_stream
       |> CSV.parse_stream(headers: false)

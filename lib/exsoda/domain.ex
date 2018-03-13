@@ -20,6 +20,6 @@ defmodule Exsoda.Domain do
   def by_name(name, opts \\ []) when is_binary(name), do: %ByName{name: name, opts: Http.options(opts)}
 
   def run(%Current{} = q), do: Http.get("/domains", q)
-  def run(%ById{id: id} = q), do: Http.get("/domains/#{id}", q)
-  def run(%ByName{name: name} = q), do: Http.get("/domains/#{name}", q)
+  def run(%ById{id: id} = q), do: Http.get("/domains/#{Http.encode(id)}", q)
+  def run(%ByName{name: name} = q), do: Http.get("/domains/#{Http.encode(name)}", q)
 end

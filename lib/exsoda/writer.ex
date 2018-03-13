@@ -184,12 +184,12 @@ defmodule Exsoda.Writer do
 
   defp do_run(%UpdateView{validate_only: nil} = uv, w) do
     with {:ok, json} <- Poison.encode(uv.properties) do
-      Http.put("/views/#{uv.fourfour}.json", w, json)
+      Http.put("/views/#{Http.encode(uv.fourfour)}.json", w, json)
     end
   end
   defp do_run(%UpdateView{validate_only: validate_only} = uv, w) do
     with {:ok, json} <- Poison.encode(uv.properties) do
-      Http.put("/views/#{uv.fourfour}.json?validateOnly=#{validate_only}", w, json)
+      Http.put("/views/#{Http.encode(uv.fourfour)}.json?validateOnly=#{Http.encode(validate_only)}", w, json)
     end
   end
 
@@ -197,7 +197,7 @@ defmodule Exsoda.Writer do
     data = merge_column(cc)
 
     with {:ok, json} <- Poison.encode(data) do
-      Http.post("/views/#{cc.fourfour}/columns", w, json)
+      Http.post("/views/#{Http.encode(cc.fourfour)}/columns", w, json)
     end
   end
 
@@ -205,7 +205,7 @@ defmodule Exsoda.Writer do
     data = %{"columns" => Enum.map(ccs, &merge_column/1)}
 
     with {:ok, json} <- Poison.encode(data) do
-      case Http.post("/views/#{hd(ccs).fourfour}/columns?method=multiCreate", w, json) do
+      case Http.post("/views/#{Http.encode(hd(ccs).fourfour)}/columns?method=multiCreate", w, json) do
         {:ok, list} -> Enum.map(list, fn result -> {:ok, result} end)
         {:error, _} = err -> Enum.map(ccs, fn _ -> err end)
       end
@@ -214,19 +214,19 @@ defmodule Exsoda.Writer do
 
   defp do_run(%UpdateColumn{} = cc, w) do
     with {:ok, json} <- Poison.encode(cc.properties) do
-      Http.put("/views/#{cc.fourfour}/columns/#{cc.fieldName}", w, json)
+      Http.put("/views/#{Http.encode(cc.fourfour)}/columns/#{Http.encode(cc.fieldName)}", w, json)
     end
   end
 
   defp do_run(%DropColumn{} = dc, w) do
-    Http.delete("/views/#{dc.fourfour}/columns/#{dc.field_name}", w)
+    Http.delete("/views/#{Http.encode(dc.fourfour)}/columns/#{Http.encode(dc.field_name)}", w)
   end
 
   defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
     with {:ok, json} <- Poison.encode(rows) do
       case u.mode do
-        :append -> Http.post("/id/#{u.fourfour}.json", w, json)
-        :replace -> Http.put("/id/#{u.fourfour}.json", w, json)
+        :append -> Http.post("/id/#{Http.encode(u.fourfour)}.json", w, json)
+        :replace -> Http.put("/id/#{Http.encode(u.fourfour)}.json", w, json)
       end
     end
   end
@@ -243,8 +243,8 @@ defmodule Exsoda.Writer do
     |> Stream.concat(["]"])
 
     case u.mode do
-      :append -> Http.post("/id/#{u.fourfour}.json", w, {:stream, json_stream})
-      :replace -> Http.put("/id/#{u.fourfour}.json", w, {:stream, json_stream})
+      :append -> Http.post("/id/#{Http.encode(u.fourfour)}.json", w, {:stream, json_stream})
+      :replace -> Http.put("/id/#{Http.encode(u.fourfour)}.json", w, {:stream, json_stream})
     end
   end
 
@@ -252,9 +252,9 @@ defmodule Exsoda.Writer do
     with {:ok, json} <- Poison.encode(%{}) do
       url =
         if copy_data do
-          "/views/#{fourfour}/publication?method=copy"
+          "/views/#{Http.encode(fourfour)}/publication?method=copy"
         else
-          "/views/#{fourfour}/publication?method=copySchema"
+          "/views/#{Http.encode(fourfour)}/publication?method=copySchema"
         end
       Http.post(url, w, json)
     end
@@ -262,24 +262,24 @@ defmodule Exsoda.Writer do
 
   defp do_run(%Publish{fourfour: fourfour}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
-      Http.post("/views/#{fourfour}/publication", w, json)
+      Http.post("/views/#{Http.encode(fourfour)}/publication", w, json)
     end
   end
 
   defp do_run(%Permission{fourfour: fourfour, mode: mode}, w) do
     with {:ok, json} <- Poison.encode(mode) do
-      Http.put("/views/#{fourfour}?method=setPermission", w, json)
+      Http.put("/views/#{Http.encode(fourfour)}?method=setPermission", w, json)
     end
   end
 
   defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
-      Http.patch("/views/#{fourfour}?method=prepareDraftForImport", w, json)
+      Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport", w, json)
     end
   end
   defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
-      Http.patch("/views/#{fourfour}?method=prepareDraftForImport&nbe=#{nbe}", w, json)
+      Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport&nbe=#{Http.encode(nbe)}", w, json)
     end
   end
 
@@ -287,12 +287,12 @@ defmodule Exsoda.Writer do
     body = {:stream, byte_stream}
     headers = %{content_type: "application/octet-stream", filename: filename}
     ops = %{opts: Map.merge(w.opts, headers)}
-    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{fourfour}"
+    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
     Http.post(url, ops, body)
   end
   defp do_run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, w) do
     body = {:multipart, [file: file_path]}
-    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{fourfour}"
+    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
     Http.post(url, w, body)
   end
 
@@ -300,12 +300,12 @@ defmodule Exsoda.Writer do
     body = {:stream, byte_stream}
     headers = %{content_type: "application/octet-stream", filename: filename}
     ops = %{opts: Map.merge(w.opts, headers)}
-    url = "/views/#{fourfour}?method=replaceBlob"
+    url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
     Http.post(url, ops, body)
   end
   defp do_run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, w) do
     body = {:multipart, [file: file_path]}
-    url = "/views/#{fourfour}?method=replaceBlob"
+    url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
     Http.post(url, w, body)
   end
 
@@ -313,7 +313,7 @@ defmodule Exsoda.Writer do
     body = {:stream, byte_stream}
     headers = %{content_type: "application/octet-stream", filename: filename}
     ops = %{opts: Map.merge(w.opts, headers)}
-    url = "/views/#{fourfour}/files.txt"
+    url = "/views/#{Http.encode(fourfour)}/files.txt"
     Http.post(url, ops, body)
   end
 
