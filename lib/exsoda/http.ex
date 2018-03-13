@@ -7,6 +7,10 @@ defmodule Exsoda.Http do
     Keyword.get(options, key, Config.get(:exsoda, key))
   end
 
+  def encode(s) do
+    URI.encode_www_form(to_string(s))
+  end
+
   defp make_url(url, api_root, proto) do
     "#{proto}://#{url}#{api_root}"
   end
@@ -233,7 +237,7 @@ defmodule Exsoda.Http do
       if ticket do
         unticketed_url = "#{base}#{path}"
         sep = if String.contains?(unticketed_url, "?") do "&" else "?" end
-        url = "#{unticketed_url}#{sep}ticket=#{ticket}"
+        url = "#{unticketed_url}#{sep}ticket=#{encode(ticket)}"
 
         HTTPoison.get(
           url,
