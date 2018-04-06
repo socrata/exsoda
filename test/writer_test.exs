@@ -326,6 +326,27 @@ defmodule ExsodaTest.Writer do
     assert !Map.has_key?(view, "grants")
   end
 
+  test "setting the Permissions blob succeeds" do
+    results = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    [{:ok, %Response{body: %{"id" => id} = view}}] = results
+
+    assert !Map.has_key?(view, "grants")
+
+    results = Writer.write()
+    |> Writer.permissions(id, %{scope: "public"})
+    |> Writer.run
+
+    assert [{:ok, resp}] = results
+    assert resp.status_code == 200
+
+    assert {:ok, %{body: %{"pendingGrants" => [%{"flags" => ["public"]}]}}} = Reader.query(id)
+    |> Reader.get_view
+
+  end
+
   test "can create a PrepareDraftForImport operation" do
     w = Writer.write()
     |> Writer.prepare_draft_for_import("meow-meow")

@@ -62,6 +62,11 @@ defmodule Exsoda.Writer do
       mode: nil
   end
 
+  defmodule Permissions do
+    defstruct fourfour: nil,
+      blob: nil
+  end
+
   defmodule PrepareDraftForImport do
     defstruct fourfour: nil,
       nbe: nil
@@ -144,6 +149,11 @@ defmodule Exsoda.Writer do
 
   def permission(%Write{} = w, fourfour, :private) do
     operation = %Permission{fourfour: fourfour, mode: "private"}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def permissions(%Write{} = w, fourfour, blob) when is_map(blob) do
+    operation = %Permissions{fourfour: fourfour, blob: blob}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -269,6 +279,12 @@ defmodule Exsoda.Writer do
   defp do_run(%Permission{fourfour: fourfour, mode: mode}, w) do
     with {:ok, json} <- Poison.encode(mode) do
       Http.put("/views/#{Http.encode(fourfour)}?method=setPermission", w, json)
+    end
+  end
+
+  defp do_run(%Permissions{fourfour: fourfour, blob: blob}, w) do
+    with {:ok, json} <- Poison.encode(blob) do
+      Http.put("/views/#{fourfour}/permissions", w, json)
     end
   end
 
