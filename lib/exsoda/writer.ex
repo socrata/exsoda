@@ -26,6 +26,10 @@ defmodule Exsoda.Writer do
     properties: %{}
   end
 
+  defmodule DropWorkingCopy do
+    defstruct fourfour: nil
+  end
+
   defmodule CreateView do
     defstruct name: nil,
     properties: %{}
@@ -118,6 +122,11 @@ defmodule Exsoda.Writer do
 
   def drop_column(%Write{} = w, fourfour, field_name, properties) do
     operation = %DropColumn{field_name: field_name, fourfour: fourfour, properties: properties}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def drop_working_copy(%Write{} = w, fourfour) do
+    operation = %DropWorkingCopy{fourfour: fourfour}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -232,6 +241,10 @@ defmodule Exsoda.Writer do
     Http.delete("/views/#{Http.encode(dc.fourfour)}/columns/#{Http.encode(dc.field_name)}", w)
   end
 
+  defp do_run(%DropWorkingCopy{fourfour: fourfour}, w) do
+    Http.delete("/views/#{Http.encode(fourfour)}", w)
+  end
+
   defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
     with {:ok, json} <- Poison.encode(rows) do
       case u.mode do
@@ -269,6 +282,7 @@ defmodule Exsoda.Writer do
       Http.post(url, w, json)
     end
   end
+
 
   defp do_run(%Publish{fourfour: fourfour}, w) do
     with {:ok, json} <- Poison.encode(%{}) do
