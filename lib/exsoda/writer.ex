@@ -41,6 +41,11 @@ defmodule Exsoda.Writer do
     validate_only: nil
   end
 
+  defmodule ValidateView do
+    defstruct fourfour: nil,
+    properties: %{}
+  end
+
   defmodule Upsert do
     defstruct fourfour: nil,
     mode: nil,
@@ -107,6 +112,11 @@ defmodule Exsoda.Writer do
 
   def update(%Write{} = w, fourfour, properties, validate_only \\ false) do
     operation = %UpdateView{fourfour: fourfour, properties: properties, validate_only: validate_only}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def validate(%Write{} = w, fourfour, properties) do
+    operation = %ValidateView{fourfour: fourfour, properties: properties}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -209,6 +219,12 @@ defmodule Exsoda.Writer do
   defp do_run(%UpdateView{validate_only: validate_only} = uv, w) do
     with {:ok, json} <- Poison.encode(uv.properties) do
       Http.put("/views/#{Http.encode(uv.fourfour)}.json?validateOnly=#{Http.encode(validate_only)}", w, json)
+    end
+  end
+
+  defp do_run(%ValidateView{} = uv, w) do
+    with {:ok, json} <- Poison.encode(uv.properties) do
+      Http.put("/views/#{Http.encode(uv.fourfour)}.json?method=validate", w, json)
     end
   end
 
