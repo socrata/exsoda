@@ -7,7 +7,9 @@ defmodule Exsoda.CuratedRegions do
       opts: []
   end
 
-  def get_curated_regions(opts \\ []), do: %Get{opts: Http.options(opts)}
+  def get_curated_regions(http_opts \\ [], queryParams \\ %{}) do
+    %{struct(Get, queryParams) | opts: Http.options(http_opts)}
+  end
 
   defp camelized_get_config(:default_only), do: "defaultOnly"
   defp camelized_get_config(:enabled_only), do: "enabledOnly"
