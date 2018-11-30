@@ -43,6 +43,16 @@ defmodule ExsodaTest.Writer do
     assert [{:ok, _}] = results
   end
 
+  test "running drop_view drops the view" do
+    [{:ok, %{body: %{"id" => id}}}] = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    assert [{:ok, _}] = Writer.write()
+    |> Writer.drop_view(id)
+    |> Writer.run
+  end
+
   test "running CreateView with no name causes an error" do
     results = Writer.write()
     |> Writer.create("", %{description: "describes"})

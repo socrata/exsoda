@@ -26,6 +26,10 @@ defmodule Exsoda.Writer do
     properties: %{}
   end
 
+  defmodule DropView do
+    defstruct fourfour: nil
+  end
+
   defmodule DropWorkingCopy do
     defstruct fourfour: nil
   end
@@ -137,6 +141,11 @@ defmodule Exsoda.Writer do
 
   def drop_column(%Write{} = w, fourfour, field_name, properties) do
     operation = %DropColumn{field_name: field_name, fourfour: fourfour, properties: properties}
+    %{ w | operations: [operation | w.operations] }
+  end
+
+  def drop_view(%Write{} = w, fourfour) do
+    operation = %DropView{fourfour: fourfour}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -265,6 +274,10 @@ defmodule Exsoda.Writer do
 
   defp do_run(%DropColumn{} = dc, w) do
     Http.delete("/views/#{Http.encode(dc.fourfour)}/columns/#{Http.encode(dc.field_name)}", w)
+  end
+
+  defp do_run(%DropView{fourfour: fourfour}, w) do
+    Http.delete("/views/#{Http.encode(fourfour)}", w)
   end
 
   defp do_run(%DropWorkingCopy{fourfour: fourfour}, w) do

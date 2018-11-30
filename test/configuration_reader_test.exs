@@ -36,27 +36,9 @@ defmodule ExsodaTest.ConfigurationReader do
     |> ConfigurationReader.get_config("view_categories", %ConfigurationReader.GetConfig{merge: true})
     |> ConfigurationReader.run
 
-    assert body == [%Configuration{id: 1,
-                                       name: "View categories",
-                                       properties: [%Configuration.Property{name: "government",
-                                                                            value: %{"enabled" => true}},
-                                                    %Configuration.Property{name: "education",
-                                                                            value: %{"enabled" => true}},
-                                                    %Configuration.Property{name: "business",
-                                                                            value: %{"enabled" => true}},
-                                                    %Configuration.Property{name: "personal",
-                                                                            value: %{"enabled" => true}},
-                                                    %Configuration.Property{name: "fun",
-                                                                            value: %{"enabled" => true}}],
-                                       type: "view_categories"},
-                        %Configuration{id: 897,
-                                       name: "View categories",
-                                       properties: [%Exsoda.Configuration.Property{name: "education", value: %{"enabled" => true}},
-                                                    %Exsoda.Configuration.Property{name: "government", value: %{"enabled" => true}},
-                                                    %Exsoda.Configuration.Property{name: "business", value: %{"enabled" => true}},
-                                                    %Exsoda.Configuration.Property{name: "Hidden", value: %{"enabled" => false, "locale_strings" => %{"en" => "Hidden", "es" => ""}}},
-                                                    %Exsoda.Configuration.Property{name: "personal", value: %{"enabled" => true}},
-                                                    %Exsoda.Configuration.Property{name: "fun", value: %{"enabled" => true}}],
-                                      type: "view_categories"}]
+    assert [
+      %Configuration{id: 1, name: "View categories", type: "view_categories"},
+      %Configuration{id: 897, name: "View categories", type: "view_categories"}
+    ] = body
   end
 end
