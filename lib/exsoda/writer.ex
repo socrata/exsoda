@@ -34,11 +34,6 @@ defmodule Exsoda.Writer do
     defstruct fourfour: nil
   end
 
-  defmodule DeleteApprovalsSubmissions do
-    defstruct fourfour: nil,
-    catalog_revision_id: nil
-  end
-
   defmodule CreateView do
     defstruct name: nil,
     properties: %{}
@@ -151,11 +146,6 @@ defmodule Exsoda.Writer do
 
   def drop_working_copy(%Write{} = w, fourfour) do
     operation = %DropWorkingCopy{fourfour: fourfour}
-    %{ w | operations: [operation | w.operations] }
-  end
-
-  def delete_approvals_submissions(%Write{} = w, fourfour, revision_id) do
-    operation = %DeleteApprovalsSubmissions{fourfour: fourfour, catalog_revision_id: "#{fourfour}:#{revision_id}"}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -282,10 +272,6 @@ defmodule Exsoda.Writer do
 
   defp do_run(%DropWorkingCopy{fourfour: fourfour}, w) do
     Http.delete("/views/#{Http.encode(fourfour)}", w)
-  end
-
-  defp do_run(%DeleteApprovalsSubmissions{} = das, w) do
-    Http.delete("/views/#{Http.encode(das.fourfour)}/approvals/#{Http.encode(das.catalog_revision_id)}?method=deleteExternalAssetSubmissions", w)
   end
 
   defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
