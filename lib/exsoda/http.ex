@@ -265,7 +265,7 @@ defmodule Exsoda.Http do
     as_json(resp)
   end
 
-  def put(path, op, body) do
+  def put(path, op, body \\ "{}") do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
       Logger.debug("Putting with request_id: #{op.opts.request_id}")
@@ -279,7 +279,7 @@ defmodule Exsoda.Http do
     end
   end
 
-  def patch(path, op, body) do
+  def patch(path, op, body \\ "{}") do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
       Logger.debug("Patching with request_id: #{op.opts.request_id}")
