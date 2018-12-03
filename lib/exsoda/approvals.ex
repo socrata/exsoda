@@ -10,12 +10,12 @@ defmodule Exsoda.Approvals do
     defstruct [:fourfour, :catalog_revision_id]
 
     defimpl Execute, for: __MODULE__ do
-      def run(%Guidance{fourfour: fourfour, catalog_revision_id: catalog_revision_id}, o) do
+      def run(%Guidance{} = gu, o) do
         query = URI.encode_query(%{
             method: "guidance",
-            assetId: catalog_revision_id
+            assetId: gu.catalog_revision_id
         })
-        Http.get("/views/#{Http.encode(fourfour)}/approvals/?#{query}", o)
+        Http.get("/views/#{Http.encode(gu.fourfour)}/approvals/?#{query}", o)
       end
     end
   end
@@ -48,7 +48,11 @@ defmodule Exsoda.Approvals do
 
     defimpl Execute, for: __MODULE__ do
       def run(%UpdateApprovalOutcomeEnd{} = uae, o) do
-        Http.put("/views/#{Http.encode(uae.fourfour)}/approvals/#{Http.encode(uae.submission_id)}?method=updateOutcomeEnd&status=#{Http.encode(uae.status)}", o)
+        query = URI.encode_query(%{
+            method: "updateOutcomeEnd",
+            status: uae.status
+        })
+        Http.put("/views/#{Http.encode(uae.fourfour)}/approvals/#{Http.encode(uae.submission_id)}?#{query}", o)
       end
     end
   end
