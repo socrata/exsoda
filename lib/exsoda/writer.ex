@@ -1,423 +1,369 @@
 defmodule Exsoda.Writer do
   alias Exsoda.Http
+  alias Exsoda.Runner
+  alias Exsoda.Runner.{Operations, Execute}
+  import Exsoda.Runner, only: [prepend: 2]
 
-  @column_create_optimization false
 
   defmodule CreateColumn do
-    defstruct name: nil,
-    dataTypeName: nil,
-    fourfour: nil,
-    properties: %{} # description, fieldName
+    defstruct name: nil, dataTypeName: nil, fourfour: nil, properties: %{} # description, fieldName
+
+    defimpl Execute, for: __MODULE__ do
+      import Exsoda.Util.Column, only: [merge_column: 1]
+
+      def run(cc, o) do
+        with {:ok, json} <- Poison.encode(merge_column(cc)) do
+          Http.post("/views/#{Http.encode(cc.fourfour)}/columns", o, json)
+        end
+      end
+    end
   end
 
   defmodule UpdateColumn do
-    defstruct fieldName: nil,
-      fourfour: nil,
-      properties: %{} # description, fieldName
+    defstruct fieldName: nil, fourfour: nil, properties: %{} # description, fieldName
+
+    defimpl Execute, for: __MODULE__ do
+      def run(uc, o) do
+        with {:ok, json} <- Poison.encode(uc.properties) do
+          Http.put("/views/#{Http.encode(uc.fourfour)}/columns/#{Http.encode(uc.fieldName)}", o, json)
+        end
+      end
+    end
   end
 
   defmodule CreateColumns do
     defstruct columns: []
+
+    defimpl Execute, for: __MODULE__ do
+      import Exsoda.Util.Column, only: [merge_column: 1]
+      def run(ccs, o) do
+
+        data = %{"columns" => Enum.map(ccs, &merge_column/1)}
+
+        with {:ok, json} <- Poison.encode(data) do
+          case Http.post("/views/#{Http.encode(hd(ccs).fourfour)}/columns?method=multiCreate", o, json) do
+            {:ok, list} -> Enum.map(list, fn result -> {:ok, result} end)
+            {:error, _} = err -> Enum.map(ccs, fn _ -> err end)
+          end
+        end
+      end
+    end
   end
 
   defmodule DropColumn do
-    defstruct field_name: nil,
-    fourfour: nil,
-    properties: %{}
+    defstruct field_name: nil, fourfour: nil, properties: %{}
+
+    defimpl Execute, for: __MODULE__ do
+      def run(dc, o) do
+        Http.delete("/views/#{Http.encode(dc.fourfour)}/columns/#{Http.encode(dc.field_name)}", o)
+      end
+    end
   end
 
   defmodule DropView do
     defstruct fourfour: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(dv, o) do
+        Http.delete("/views/#{Http.encode(dv.fourfour)}", o)
+      end
+    end
   end
 
   defmodule DropWorkingCopy do
     defstruct fourfour: nil
-  end
 
-  defmodule DeleteApprovalsSubmissions do
-    defstruct fourfour: nil,
-    catalog_revision_id: nil
+    defimpl Execute, for: __MODULE__ do
+      def run(dc, o) do
+        Http.delete("/views/#{Http.encode(dc.fourfour)}", o)
+      end
+    end
   end
 
   defmodule CreateView do
-    defstruct name: nil,
-    properties: %{}
+    defstruct name: nil, properties: %{}
+
+    defimpl Execute, for: __MODULE__ do
+      def run(cv, o) do
+        data = Map.merge(cv.properties, %{name: cv.name})
+        with {:ok, json} <- Poison.encode(data) do
+          Http.post("/views.json", o, json)
+        end
+      end
+    end
   end
 
   defmodule UpdateView do
-    defstruct fourfour: nil,
-    properties: %{},
-    validate_only: nil
+    defstruct fourfour: nil, properties: %{}, validate_only: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%UpdateView{validate_only: nil} = vv, o) do
+        with {:ok, json} <- Poison.encode(vv.properties) do
+          Http.put("/views/#{Http.encode(vv.fourfour)}.json", o, json)
+        end
+      end
+
+
+      def run(%UpdateView{validate_only: validate_only} = vv, o) do
+        with {:ok, json} <- Poison.encode(vv.properties) do
+          Http.put("/views/#{Http.encode(vv.fourfour)}.json?validateOnly=#{Http.encode(validate_only)}", o, json)
+        end
+      end
+    end
   end
 
   defmodule ValidateView do
-    defstruct fourfour: nil,
-    properties: %{}
+    defstruct fourfour: nil, properties: %{}
+
+    defimpl Execute, for: __MODULE__ do
+      def run(uv, o) do
+        with {:ok, json} <- Poison.encode(uv.properties) do
+          Http.put("/views/#{Http.encode(uv.fourfour)}.json?method=validate", o, json)
+        end
+      end
+    end
   end
 
   defmodule Upsert do
-    defstruct fourfour: nil,
-    mode: nil,
-    rows: []
-  end
+    defstruct fourfour: nil, mode: nil, rows: []
 
-  defmodule Write do
-    defstruct opts: %{},
-      operations: []
+    defimpl Execute, for: __MODULE__ do
+      def run(%Upsert{rows: rows, mode: mode, fourfour: fourfour}, o) when is_list(rows) do
+        with {:ok, json} <- Poison.encode(rows) do
+          case mode do
+            :append -> Http.post("/id/#{Http.encode(fourfour)}.json", o, json)
+            :replace -> Http.put("/id/#{Http.encode(fourfour)}.json", o, json)
+          end
+        end
+      end
+
+      def run(%Upsert{rows: rows, mode: mode, fourfour: fourfour}, o) do
+        with_commas = Stream.transform(rows, false, fn
+          row, false -> {[Poison.encode!(row)], true}
+          row, true  -> {[",\n" <> Poison.encode!(row)], true}
+        end)
+
+        json_stream = Stream.concat(
+          ["["],
+          with_commas
+        )
+        |> Stream.concat(["]"])
+
+        case mode do
+          :append -> Http.post("/id/#{Http.encode(fourfour)}.json", o, {:stream, json_stream})
+          :replace -> Http.put("/id/#{Http.encode(fourfour)}.json", o, {:stream, json_stream})
+        end
+      end
+    end
   end
 
   defmodule Copy do
-    defstruct fourfour: nil,
-      copy_data: true
+    defstruct fourfour: nil, copy_data: true
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%Copy{copy_data: copy_data} = copy, o) do
+        json = Poison.encode!(%{})
+        url =
+          if copy_data do
+            "/views/#{Http.encode(copy.fourfour)}/publication?method=copy"
+          else
+            "/views/#{Http.encode(copy.fourfour)}/publication?method=copySchema"
+          end
+        Http.post(url, o, json)
+      end
+    end
   end
 
   defmodule Publish do
     defstruct fourfour: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(p, o) do
+        json = Poison.encode!(%{})
+        Http.post("/views/#{Http.encode(p.fourfour)}/publication", o, json)
+      end
+    end
   end
 
   defmodule Permission do
-    defstruct fourfour: nil,
-      mode: nil
+    defstruct fourfour: nil, mode: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%Permission{fourfour: fourfour, mode: mode}, o) do
+        with {:ok, json} <- Poison.encode(mode) do
+          Http.put("/views/#{Http.encode(fourfour)}?method=setPermission", o, json)
+        end
+      end
+    end
   end
 
   defmodule Permissions do
-    defstruct fourfour: nil,
-      blob: nil
+    defstruct fourfour: nil, blob: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%Permissions{fourfour: fourfour, blob: blob}, o) do
+        with {:ok, json} <- Poison.encode(blob) do
+          Http.put("/views/#{fourfour}/permissions", o, json)
+        end
+      end
+    end
   end
 
   defmodule PrepareDraftForImport do
-    defstruct fourfour: nil,
-      nbe: nil
+    defstruct fourfour: nil, nbe: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, o) do
+        json = Poison.encode!(%{})
+        Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport", o, json)
+      end
+
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o) do
+        json = Poison.encode!(%{})
+        Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport&nbe=#{Http.encode(nbe)}", o, json)
+      end
+    end
   end
 
   defmodule SetBlobForDraft do
-    defstruct fourfour: nil,
-    filename: nil,
-    file_path: nil,
-    byte_stream: nil
+    defstruct fourfour: nil, filename: nil, file_path: nil, byte_stream: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, o) when is_binary(file_path) do
+        body = {:multipart, [file: file_path]}
+        url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
+        Http.post(url, o, body)
+      end
+
+      def run(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
+        body = {:stream, byte_stream}
+        headers = %{content_type: "application/octet-stream", filename: filename}
+        ops = %{opts: Map.merge(o.opts, headers)}
+        url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
+        Http.post(url, ops, body)
+      end
+    end
   end
 
   defmodule ReplaceBlob do
-    defstruct fourfour: nil,
-    filename: nil,
-    file_path: nil,
-    byte_stream: nil
+    defstruct fourfour: nil, filename: nil, file_path: nil, byte_stream: nil
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, o) when is_binary(file_path) do
+        body = {:multipart, [file: file_path]}
+        url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
+        Http.post(url, o, body)
+      end
+      def run(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
+        body = {:stream, byte_stream}
+        headers = %{content_type: "application/octet-stream", filename: filename}
+        ops = %{opts: Map.merge(o.opts, headers)}
+        url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
+        Http.post(url, ops, body)
+      end
+    end
   end
 
   defmodule UploadAttachment do
     defstruct [:fourfour, :byte_stream, :filename]
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
+        body = {:stream, byte_stream}
+        headers = %{content_type: "application/octet-stream", filename: filename}
+        ops = %{opts: Map.merge(o.opts, headers)}
+        url = "/views/#{Http.encode(fourfour)}/files.txt"
+        Http.post(url, ops, body)
+      end
+    end
   end
 
-  def write(options \\ []) do
-    %Write{
-      opts: Http.options(options)
-    }
+  # For backwards compat
+  def write(options \\ []), do: Runner.new(options)
+
+  def new(options \\ []), do: Runner.new(options)
+  def run(operations), do: Runner.run(operations)
+
+  def create(%Operations{} = o, name, properties) do
+    prepend(%CreateView{name: name, properties: properties}, o)
   end
 
-  def create(%Write{} = w, name, properties) do
-    operation = %CreateView{name: name, properties: properties}
-    %{ w | operations: [operation | w.operations] }
+  def update(%Operations{} = o, fourfour, properties, validate_only \\ false) do
+    prepend(%UpdateView{fourfour: fourfour, properties: properties, validate_only: validate_only}, o)
   end
 
-  def update(%Write{} = w, fourfour, properties, validate_only \\ false) do
-    operation = %UpdateView{fourfour: fourfour, properties: properties, validate_only: validate_only}
-    %{ w | operations: [operation | w.operations] }
+  def validate(%Operations{} = o, fourfour, properties) do
+    prepend(%ValidateView{fourfour: fourfour, properties: properties}, o)
   end
 
-  def validate(%Write{} = w, fourfour, properties) do
-    operation = %ValidateView{fourfour: fourfour, properties: properties}
-    %{ w | operations: [operation | w.operations] }
+  def create_column(%Operations{} = o, fourfour, name, type, properties) do
+    prepend(%CreateColumn{name: name, dataTypeName: type, fourfour: fourfour, properties: properties}, o)
   end
 
-  def create_column(%Write{} = w, fourfour, name, type, properties) do
-    operation = %CreateColumn{name: name, dataTypeName: type, fourfour: fourfour, properties: properties}
-    %{ w | operations: [operation | w.operations] }
+  def update_column(%Operations{} = o, fourfour, field_name, properties) do
+    prepend(%UpdateColumn{fourfour: fourfour, fieldName: field_name, properties: properties}, o)
   end
 
-  def update_column(%Write{} = w, fourfour, field_name, properties) do
-    operation = %UpdateColumn{fourfour: fourfour, fieldName: field_name, properties: properties}
-    %{ w | operations: [operation | w.operations] }
+  def drop_column(%Operations{} = o, fourfour, field_name, properties) do
+    prepend(%DropColumn{field_name: field_name, fourfour: fourfour, properties: properties}, o)
   end
 
-  def drop_column(%Write{} = w, fourfour, field_name, properties) do
-    operation = %DropColumn{field_name: field_name, fourfour: fourfour, properties: properties}
-    %{ w | operations: [operation | w.operations] }
+  def drop_view(%Operations{} = o, fourfour) do
+    prepend(%DropView{fourfour: fourfour}, o)
   end
 
-  def drop_view(%Write{} = w, fourfour) do
-    operation = %DropView{fourfour: fourfour}
-    %{ w | operations: [operation | w.operations] }
-  end
-
-  def drop_working_copy(%Write{} = w, fourfour) do
-    operation = %DropWorkingCopy{fourfour: fourfour}
-    %{ w | operations: [operation | w.operations] }
-  end
-
-  def delete_approvals_submissions(%Write{} = w, fourfour, revision_id) do
-    operation = %DeleteApprovalsSubmissions{fourfour: fourfour, catalog_revision_id: "#{fourfour}:#{revision_id}"}
-    %{ w | operations: [operation | w.operations] }
+  def drop_working_copy(%Operations{} = o, fourfour) do
+    prepend(%DropWorkingCopy{fourfour: fourfour}, o)
   end
 
   # a row looks like: {fieldName: value, fieldName: value}
-  def upsert(%Write{} = w, fourfour, rows) do
-    operation = %Upsert{fourfour: fourfour, rows: rows, mode: :append}
-    %{ w | operations: [operation | w.operations] }
+  def upsert(%Operations{} = o, fourfour, rows) do
+    prepend(%Upsert{fourfour: fourfour, rows: rows, mode: :append}, o)
   end
 
-  def replace(%Write{} = w, fourfour, rows) do
-    operation = %Upsert{fourfour: fourfour, rows: rows, mode: :replace}
-    %{ w | operations: [operation | w.operations] }
+  def replace(%Operations{} = o, fourfour, rows) do
+    prepend(%Upsert{fourfour: fourfour, rows: rows, mode: :replace}, o)
   end
 
-  def copy(%Write{} = w, fourfour, copy_data \\ true) do
-    operation = %Copy{fourfour: fourfour, copy_data: copy_data}
-    %{ w | operations: [operation | w.operations] }
+  def copy(%Operations{} = o, fourfour, copy_data \\ true) do
+    prepend(%Copy{fourfour: fourfour, copy_data: copy_data}, o)
   end
 
-  def publish(%Write{} = w, fourfour) do
-    operation = %Publish{fourfour: fourfour}
-    %{ w | operations: [operation | w.operations] }
+  def publish(%Operations{} = o, fourfour) do
+    prepend(%Publish{fourfour: fourfour}, o)
   end
 
-  def permission(%Write{} = w, fourfour, :public) do
-    operation = %Permission{fourfour: fourfour, mode: "public.read"}
-    %{ w | operations: [operation | w.operations] }
+  def permission(%Operations{} = o, fourfour, :public) do
+    prepend(%Permission{fourfour: fourfour, mode: "public.read"}, o)
   end
 
-  def permission(%Write{} = w, fourfour, :private) do
-    operation = %Permission{fourfour: fourfour, mode: "private"}
-    %{ w | operations: [operation | w.operations] }
+  def permission(%Operations{} = o, fourfour, :private) do
+    prepend(%Permission{fourfour: fourfour, mode: "private"}, o)
   end
 
-  def permissions(%Write{} = w, fourfour, blob) when is_map(blob) do
-    operation = %Permissions{fourfour: fourfour, blob: blob}
-    %{ w | operations: [operation | w.operations] }
+  def permissions(%Operations{} = o, fourfour, blob) when is_map(blob) do
+    prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
   end
 
-  def prepare_draft_for_import(%Write{} = w, fourfour, nbe \\ false) do
-    operation = %PrepareDraftForImport{fourfour: fourfour, nbe: nbe}
-    %{ w | operations: [operation | w.operations] }
+  def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false) do
+    prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o)
   end
 
-  def set_blob_for_draft(%Write{} = w, fourfour, file_path) when is_binary(file_path) do
-    operation = %SetBlobForDraft{fourfour: fourfour, file_path: file_path}
-    %{ w | operations: [operation | w.operations] }
+  def set_blob_for_draft(%Operations{} = o, fourfour, file_path) when is_binary(file_path) do
+    prepend(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, o)
   end
-  def set_blob_for_draft(%Write{} = w, fourfour, byte_stream, filename) when is_map(byte_stream) do
-    operation = %SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}
-    %{ w | operations: [operation | w.operations] }
+  def set_blob_for_draft(%Operations{} = o, fourfour, byte_stream, filename) when is_map(byte_stream) do
+    prepend(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o)
   end
 
-  def replace_blob(%Write{} = w, fourfour, file_path) when is_binary(file_path) do
-    operation = %ReplaceBlob{fourfour: fourfour, file_path: file_path}
-    %{ w | operations: [operation | w.operations] }
+  def replace_blob(%Operations{} = o, fourfour, file_path) when is_binary(file_path) do
+    prepend(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, o)
   end
-  def replace_blob(%Write{} = w, fourfour, byte_stream, filename) when is_map(byte_stream) do
-    operation = %ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}
-    %{ w | operations: [operation | w.operations] }
+  def replace_blob(%Operations{} = o, fourfour, byte_stream, filename) when is_map(byte_stream) do
+    prepend(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o)
   end
 
-  def upload_attachment(%Write{} = w, fourfour, byte_stream, filename) do
-    operation = %UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}
-    %{w | operations: [operation | w.operations]}
-  end
-
-  defp do_run(%CreateView{} = cv, w) do
-    data = Map.merge(cv.properties, %{name: cv.name})
-    with {:ok, json} <- Poison.encode(data) do
-      Http.post("/views.json", w, json)
-    end
-  end
-
-  defp do_run(%UpdateView{validate_only: nil} = uv, w) do
-    with {:ok, json} <- Poison.encode(uv.properties) do
-      Http.put("/views/#{Http.encode(uv.fourfour)}.json", w, json)
-    end
-  end
-  defp do_run(%UpdateView{validate_only: validate_only} = uv, w) do
-    with {:ok, json} <- Poison.encode(uv.properties) do
-      Http.put("/views/#{Http.encode(uv.fourfour)}.json?validateOnly=#{Http.encode(validate_only)}", w, json)
-    end
-  end
-
-  defp do_run(%ValidateView{} = uv, w) do
-    with {:ok, json} <- Poison.encode(uv.properties) do
-      Http.put("/views/#{Http.encode(uv.fourfour)}.json?method=validate", w, json)
-    end
-  end
-
-  defp do_run(%CreateColumn{} = cc, w) do
-    data = merge_column(cc)
-
-    with {:ok, json} <- Poison.encode(data) do
-      Http.post("/views/#{Http.encode(cc.fourfour)}/columns", w, json)
-    end
-  end
-
-  defp do_run(%CreateColumns{columns: ccs}, w) do
-    data = %{"columns" => Enum.map(ccs, &merge_column/1)}
-
-    with {:ok, json} <- Poison.encode(data) do
-      case Http.post("/views/#{Http.encode(hd(ccs).fourfour)}/columns?method=multiCreate", w, json) do
-        {:ok, list} -> Enum.map(list, fn result -> {:ok, result} end)
-        {:error, _} = err -> Enum.map(ccs, fn _ -> err end)
-      end
-    end
-  end
-
-  defp do_run(%UpdateColumn{} = cc, w) do
-    with {:ok, json} <- Poison.encode(cc.properties) do
-      Http.put("/views/#{Http.encode(cc.fourfour)}/columns/#{Http.encode(cc.fieldName)}", w, json)
-    end
-  end
-
-  defp do_run(%DropColumn{} = dc, w) do
-    Http.delete("/views/#{Http.encode(dc.fourfour)}/columns/#{Http.encode(dc.field_name)}", w)
-  end
-
-  defp do_run(%DropView{fourfour: fourfour}, w) do
-    Http.delete("/views/#{Http.encode(fourfour)}", w)
-  end
-
-  defp do_run(%DropWorkingCopy{fourfour: fourfour}, w) do
-    Http.delete("/views/#{Http.encode(fourfour)}", w)
-  end
-
-  defp do_run(%DeleteApprovalsSubmissions{} = das, w) do
-    Http.delete("/views/#{Http.encode(das.fourfour)}/approvals/#{Http.encode(das.catalog_revision_id)}?method=deleteExternalAssetSubmissions", w)
-  end
-
-  defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
-    with {:ok, json} <- Poison.encode(rows) do
-      case u.mode do
-        :append -> Http.post("/id/#{Http.encode(u.fourfour)}.json", w, json)
-        :replace -> Http.put("/id/#{Http.encode(u.fourfour)}.json", w, json)
-      end
-    end
-  end
-  defp do_run(%Upsert{rows: rows} = u, w) do
-    with_commas = Stream.transform(rows, false, fn
-      row, false -> {[Poison.encode!(row)], true}
-      row, true  -> {[",\n" <> Poison.encode!(row)], true}
-    end)
-
-    json_stream = Stream.concat(
-      ["["],
-      with_commas
-    )
-    |> Stream.concat(["]"])
-
-    case u.mode do
-      :append -> Http.post("/id/#{Http.encode(u.fourfour)}.json", w, {:stream, json_stream})
-      :replace -> Http.put("/id/#{Http.encode(u.fourfour)}.json", w, {:stream, json_stream})
-    end
-  end
-
-  defp do_run(%Copy{fourfour: fourfour, copy_data: copy_data}, w) do
-    with {:ok, json} <- Poison.encode(%{}) do
-      url =
-        if copy_data do
-          "/views/#{Http.encode(fourfour)}/publication?method=copy"
-        else
-          "/views/#{Http.encode(fourfour)}/publication?method=copySchema"
-        end
-      Http.post(url, w, json)
-    end
-  end
-
-
-  defp do_run(%Publish{fourfour: fourfour}, w) do
-    with {:ok, json} <- Poison.encode(%{}) do
-      Http.post("/views/#{Http.encode(fourfour)}/publication", w, json)
-    end
-  end
-
-  defp do_run(%Permission{fourfour: fourfour, mode: mode}, w) do
-    with {:ok, json} <- Poison.encode(mode) do
-      Http.put("/views/#{Http.encode(fourfour)}?method=setPermission", w, json)
-    end
-  end
-
-  defp do_run(%Permissions{fourfour: fourfour, blob: blob}, w) do
-    with {:ok, json} <- Poison.encode(blob) do
-      Http.put("/views/#{fourfour}/permissions", w, json)
-    end
-  end
-
-  defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, w) do
-    with {:ok, json} <- Poison.encode(%{}) do
-      Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport", w, json)
-    end
-  end
-  defp do_run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, w) do
-    with {:ok, json} <- Poison.encode(%{}) do
-      Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport&nbe=#{Http.encode(nbe)}", w, json)
-    end
-  end
-
-  defp do_run(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
-    body = {:stream, byte_stream}
-    headers = %{content_type: "application/octet-stream", filename: filename}
-    ops = %{opts: Map.merge(w.opts, headers)}
-    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
-    Http.post(url, ops, body)
-  end
-  defp do_run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, w) do
-    body = {:multipart, [file: file_path]}
-    url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
-    Http.post(url, w, body)
-  end
-
-  defp do_run(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
-    body = {:stream, byte_stream}
-    headers = %{content_type: "application/octet-stream", filename: filename}
-    ops = %{opts: Map.merge(w.opts, headers)}
-    url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
-    Http.post(url, ops, body)
-  end
-  defp do_run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, w) do
-    body = {:multipart, [file: file_path]}
-    url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
-    Http.post(url, w, body)
-  end
-
-  defp do_run(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, w) do
-    body = {:stream, byte_stream}
-    headers = %{content_type: "application/octet-stream", filename: filename}
-    ops = %{opts: Map.merge(w.opts, headers)}
-    url = "/views/#{Http.encode(fourfour)}/files.txt"
-    Http.post(url, ops, body)
-  end
-
-  defp merge_column(%CreateColumn{} = cc), do: Map.take(cc, [:dataTypeName, :name]) |> Map.merge(cc.properties)
-
-  defp collapse_column_create([]), do: []
-  defp collapse_column_create([%CreateColumn{fourfour: fourfour} = cc | ccs]) do
-    if @column_create_optimization do
-      {ccs, remainder} = Enum.split_while(ccs, fn
-        %CreateColumn{fourfour: ^fourfour} -> true
-        _ -> false
-      end)
-      [%CreateColumns{columns: [cc | ccs]} | collapse_column_create(remainder)]
-    else
-      [cc | ccs]
-    end
-  end
-  defp collapse_column_create([h | t]), do: [h | collapse_column_create(t)]
-
-  def run(%Write{} = w) do
-    w.operations
-    |> Enum.reverse
-    |> collapse_column_create
-    |> Enum.reduce_while([], fn op, acc ->
-      Enum.reduce_while(List.wrap(do_run(op, w)), {:cont, acc}, fn result, {_, acc} ->
-        case result do
-          {:error, _} = err -> {:halt, {:halt, [err | acc]}}
-          {:ok, _} = ok     -> {:cont, {:cont, [ok  | acc]}}
-        end
-      end)
-    end)
-    |> Enum.reverse
+  def upload_attachment(%Operations{} = o, fourfour, byte_stream, filename) do
+    prepend(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o)
   end
 end
