@@ -20,6 +20,19 @@ defmodule Exsoda.Approvals do
     end
   end
 
+  defmodule StartWorkflowSubmission do
+    @enforce_keys [:fourfour, :submission]
+    defstruct [:fourfour, :submission]
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%StartWorkflowSubmission{} = sas, o) do
+        with {:ok, json} <- Poison.encode(sas.submission) do
+          Http.post("/views/#{Http.encode(sas.fourfour)}/approvals/?method=startWorkflowSubmission", o, json)
+        end
+      end
+    end
+  end
+
   defmodule DeleteApprovalsSubmissions do
     @enforce_keys [:fourfour, :catalog_revision_id]
     defstruct [:fourfour, :catalog_revision_id]
@@ -62,6 +75,10 @@ defmodule Exsoda.Approvals do
 
   def guidance(%Operations{} = o, fourfour, revision_id) do
     prepend(%Guidance{fourfour: fourfour, catalog_revision_id: "#{fourfour}:#{revision_id}"}, o)
+  end
+
+  def start_workflow_submission(%Operations{} = o, fourfour, submission) do
+    prepend(%StartWorkflowSubmission{fourfour: fourfour, submission: submission}, o)
   end
 
   def delete_approvals_submissions(%Operations{} = o, fourfour, revision_id) do
