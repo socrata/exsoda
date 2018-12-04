@@ -54,6 +54,7 @@ defmodule Exsoda.Writer do
   defmodule Upsert do
     defstruct fourfour: nil,
     mode: nil,
+    options: nil,
     rows: []
   end
 
@@ -151,8 +152,8 @@ defmodule Exsoda.Writer do
   end
 
   # a row looks like: {fieldName: value, fieldName: value}
-  def upsert(%Write{} = w, fourfour, rows) do
-    operation = %Upsert{fourfour: fourfour, rows: rows, mode: :append}
+  def upsert(%Write{} = w, fourfour, rows, options \\ nil) do
+    operation = %Upsert{fourfour: fourfour, rows: rows, mode: :append, options: options}
     %{ w | operations: [operation | w.operations] }
   end
 
@@ -276,13 +277,21 @@ defmodule Exsoda.Writer do
   end
 
   defp do_run(%Upsert{rows: rows} = u, w) when is_list(rows) do
+    url = case u.options do
+      %{} = params ->
+        "/id/#{Http.encode(u.fourfour)}.json?" <> Plug.Conn.Query.encode(params)
+      _ ->
+        "/id/#{Http.encode(u.fourfour)}.json"
+    end
+
     with {:ok, json} <- Poison.encode(rows) do
       case u.mode do
-        :append -> Http.post("/id/#{Http.encode(u.fourfour)}.json", w, json)
-        :replace -> Http.put("/id/#{Http.encode(u.fourfour)}.json", w, json)
+        :append -> Http.post(url, w, json)
+        :replace -> Http.put(url, w, json)
       end
     end
   end
+
   defp do_run(%Upsert{rows: rows} = u, w) do
     with_commas = Stream.transform(rows, false, fn
       row, false -> {[Poison.encode!(row)], true}
@@ -295,9 +304,16 @@ defmodule Exsoda.Writer do
     )
     |> Stream.concat(["]"])
 
+    url = case u.options do
+      %{} = params ->
+        "/id/#{Http.encode(u.fourfour)}.json?" <> Plug.Conn.Query.encode(params)
+      _ ->
+        "/id/#{Http.encode(u.fourfour)}.json"
+    end
+
     case u.mode do
-      :append -> Http.post("/id/#{Http.encode(u.fourfour)}.json", w, {:stream, json_stream})
-      :replace -> Http.put("/id/#{Http.encode(u.fourfour)}.json", w, {:stream, json_stream})
+      :append -> Http.post(url, w, {:stream, json_stream})
+      :replace -> Http.put(url, w, {:stream, json_stream})
     end
   end
 
