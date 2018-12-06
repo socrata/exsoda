@@ -125,19 +125,26 @@ defmodule Exsoda.Writer do
   end
 
   defmodule Upsert do
-    defstruct fourfour: nil, mode: nil, rows: []
+    defstruct fourfour: nil, mode: nil, rows: [], options: nil
 
     defimpl Execute, for: __MODULE__ do
-      def run(%Upsert{rows: rows, mode: mode, fourfour: fourfour}, o) when is_list(rows) do
+      def run(%Upsert{rows: rows, mode: mode, fourfour: fourfour, options: options}, o) when is_list(rows) do
         with {:ok, json} <- Poison.encode(rows) do
+          url = case options do
+            %{} = params ->
+              "/id/#{Http.encode(fourfour)}.json?" <> Plug.Conn.Query.encode(params)
+            _ ->
+              "/id/#{Http.encode(fourfour)}.json"
+          end
+
           case mode do
-            :append -> Http.post("/id/#{Http.encode(fourfour)}.json", o, json)
-            :replace -> Http.put("/id/#{Http.encode(fourfour)}.json", o, json)
+            :append -> Http.post(url, o, json)
+            :replace -> Http.put(url, o, json)
           end
         end
       end
 
-      def run(%Upsert{rows: rows, mode: mode, fourfour: fourfour}, o) do
+      def run(%Upsert{rows: rows, mode: mode, fourfour: fourfour, options: options}, o) do
         with_commas = Stream.transform(rows, false, fn
           row, false -> {[Poison.encode!(row)], true}
           row, true  -> {[",\n" <> Poison.encode!(row)], true}
@@ -149,9 +156,16 @@ defmodule Exsoda.Writer do
         )
         |> Stream.concat(["]"])
 
+        url = case options do
+          %{} = params ->
+            "/id/#{Http.encode(fourfour)}.json?" <> Plug.Conn.Query.encode(params)
+          _ ->
+            "/id/#{Http.encode(fourfour)}.json"
+        end
+
         case mode do
-          :append -> Http.post("/id/#{Http.encode(fourfour)}.json", o, {:stream, json_stream})
-          :replace -> Http.put("/id/#{Http.encode(fourfour)}.json", o, {:stream, json_stream})
+          :append -> Http.post(url, o, {:stream, json_stream})
+          :replace -> Http.put(url, o, {:stream, json_stream})
         end
       end
     end
@@ -317,8 +331,8 @@ defmodule Exsoda.Writer do
   end
 
   # a row looks like: {fieldName: value, fieldName: value}
-  def upsert(%Operations{} = o, fourfour, rows) do
-    prepend(%Upsert{fourfour: fourfour, rows: rows, mode: :append}, o)
+  def upsert(%Operations{} = o, fourfour, rows, options \\ nil) do
+    prepend(%Upsert{fourfour: fourfour, rows: rows, mode: :append, options: options}, o)
   end
 
   def replace(%Operations{} = o, fourfour, rows) do
