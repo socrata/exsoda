@@ -172,6 +172,30 @@ defmodule ExsodaTest.Writer do
     assert Enum.into(rows_stream, []) == [[{"text column", "a text value"}], [{"text column", "a second text value"}]]
   end
 
+  test "can add options to Upsert operation" do
+    [{:ok, %Response{body: %{"id" => fourfour}}}] = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    [{:ok, _}] = Writer.write()
+    |> Writer.create_column(fourfour, "text column", "text", %{})
+    |> Writer.run
+
+    results = Writer.write()
+    |> Writer.upsert(
+      fourfour,
+      [%{text_column: "a text value"}, %{text_column: "a second text value"}],
+      %{"this_is_an_option" => true}
+    )
+    |> Writer.run
+
+    assert [{:ok, _}] = results
+
+    [{:ok, results}] = results
+
+    assert String.contains?(results.request_url, "this_is_an_option=true")
+  end
+
   test "can do a streaming replace" do
     [{:ok, %Response{body: %{"id" => fourfour}}}] = Writer.write()
     |> Writer.create("a name", %{description: "describes"})
