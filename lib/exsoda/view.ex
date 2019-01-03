@@ -1,5 +1,6 @@
 defmodule Exsoda.View do
   alias Exsoda.Http
+  
   defstruct fourfour: nil,
     name: nil
 
