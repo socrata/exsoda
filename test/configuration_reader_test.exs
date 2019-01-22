@@ -2,7 +2,6 @@ defmodule ExsodaTest.ConfigurationReader do
   use ExUnit.Case, async: true
   alias Exsoda.Config
   alias Exsoda.ConfigurationReader
-  alias Exsoda.Configuration
   alias HTTPoison.Response
 
   defp expected_state(query) do
@@ -37,8 +36,8 @@ defmodule ExsodaTest.ConfigurationReader do
     |> ConfigurationReader.run
 
     assert [
-      %Configuration{id: 1, name: "View categories", type: "view_categories"},
-      %Configuration{id: 897, name: "View categories", type: "view_categories"}
+      %{"id" => 1, "name" => "View categories", "type" => "view_categories"},
+      %{"id" => 897, "name" => "View categories", "type" => "view_categories"}
     ] = body
   end
 end

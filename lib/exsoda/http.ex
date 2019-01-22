@@ -178,7 +178,7 @@ defmodule Exsoda.Http do
   end
   # Parse the body as json, return an error if we can't parse it
   def as_json({:ok, %Response{body: body, status_code: status} = resp}, json_opts) when (status >= 200) and (status < 300)  do
-    with {:ok, body} <- Poison.decode(body, json_opts) do
+    with {:ok, body} <- Jason.decode(body, json_opts) do
       {:ok, %{resp | body: body}}
     end
   end
@@ -252,7 +252,7 @@ defmodule Exsoda.Http do
   end
 
   defp maybe_202({:ok, %Response{body: body, status_code: 202}}, path, op, redo) do
-    case Poison.decode(body) do
+    case Jason.decode(body) do
       {:ok, %{"ticket" => ticket}} ->
         poll202(path, op, ticket, redo)
       {:ok, _} ->

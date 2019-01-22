@@ -1,6 +1,5 @@
 defmodule Exsoda.ConfigurationReader do
   alias Exsoda.Http
-  alias Exsoda.Configuration
 
   defmodule GetConfig do
     defstruct type: nil,
@@ -44,18 +43,17 @@ defmodule Exsoda.ConfigurationReader do
     |> Map.from_struct
     |> Enum.map(fn {k, v} -> {camelized_get_config(k), v} end)
     |> URI.encode_query
-    get("/configurations?#{query_str}", r,
-      as: [%Configuration{properties: [%Configuration.Property{}]}])
+    get("/configurations?#{query_str}", r)
   end
 
-  defp get(path, r, json_opts) do
+  defp get(path, r) do
     with {:ok, base} <- Http.base_url(r),
          {:ok, options} <- Http.http_opts(r) do
       HTTPoison.get(
         "#{base}#{path}",
         Http.headers(r),
         options
-      ) |> Http.as_json(json_opts)
+      ) |> Http.as_json
     end
   end
 end

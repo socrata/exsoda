@@ -26,7 +26,7 @@ defmodule Exsoda.Approvals do
 
     defimpl Execute, for: __MODULE__ do
       def run(%StartWorkflowSubmission{} = sas, o) do
-        with {:ok, json} <- Poison.encode(sas.submission) do
+        with {:ok, json} <- Jason.encode(sas.submission) do
           Http.post("/views/#{Http.encode(sas.fourfour)}/approvals/?method=startWorkflowSubmission", o, json)
         end
       end
