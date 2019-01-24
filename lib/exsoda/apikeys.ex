@@ -6,8 +6,8 @@ defmodule Exsoda.ApiKeys do
 
 
   defmodule Create do
-    @enforce_keys [:tokenName]
-    defstruct [:tokenName]
+    @enforce_keys [:keyName]
+    defstruct [:keyName]
 
     defimpl Execute, for: __MODULE__ do
       def run(%Create{} = c, o) do
@@ -19,5 +19,5 @@ defmodule Exsoda.ApiKeys do
 
   def new(options \\ []), do: Runner.new(options)
   def run(operations), do: Runner.run(operations)
-  def create(%Operations{} = o, name), do: prepend(%Create{tokenName: name}, o)
+  def create(%Operations{} = o, name), do: prepend(%Create{keyName: name}, o)
 end
