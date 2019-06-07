@@ -335,8 +335,8 @@ defmodule Exsoda.Writer do
     prepend(%Upsert{fourfour: fourfour, rows: rows, mode: :append, options: options}, o)
   end
 
-  def replace(%Operations{} = o, fourfour, rows) do
-    prepend(%Upsert{fourfour: fourfour, rows: rows, mode: :replace}, o)
+  def replace(%Operations{} = o, fourfour, rows, options \\ nil) do
+    prepend(%Upsert{fourfour: fourfour, rows: rows, mode: :replace, options: options}, o)
   end
 
   def copy(%Operations{} = o, fourfour, copy_data \\ true) do
