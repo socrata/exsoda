@@ -27,6 +27,20 @@ defmodule Exsoda.Reader do
     {:ok, columns}
   end
 
+  def get_views(fourfours, options \\ []) do
+    state = query(nil, options)
+
+    fourfours = fourfours
+    |> Enum.map(fn ff -> "ids=#{Http.encode(ff)}" end)
+    |> Enum.join("&")
+    with {:ok, base} <- Http.base_url(state),
+         {:ok, options} <- Http.http_opts(state) do
+      "#{base}/views?method=getByIds&#{fourfours}.json"
+      |> HTTPoison.get(Http.headers(state), options)
+      |> Http.as_json
+    end
+  end
+
   def get_view(%Query{fourfour: fourfour} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
