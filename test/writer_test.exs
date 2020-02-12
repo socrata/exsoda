@@ -16,6 +16,17 @@ defmodule ExsodaTest.Writer do
     UploadAttachment
   }
 
+  def wait_for_replication(fourfour, attempts_left \\ 10) do
+    {:ok, %HTTPoison.Response{body: body}} = Reader.query(fourfour) |>  Reader.replication
+    case body do
+      %{"read_replication_up_to_date" => true} ->
+          :done
+      %{"read_replication_up_to_date" => false} ->
+          :timer.sleep(500) # wait half a second
+          wait_for_replication(fourfour, attempts_left - 1)
+    end
+  end
+
   test "can create a create_view operation" do
     w = Writer.write()
     |> Writer.create("a name", %{description: "describes"})
@@ -165,11 +176,12 @@ defmodule ExsodaTest.Writer do
     |> Writer.run
 
     assert [{:ok, _}] = results
+    :done = wait_for_replication(fourfour)
 
     {:ok, rows_stream} = Reader.query(fourfour)
     |> Reader.run
 
-    assert Enum.into(rows_stream, []) == [[{"text column", "a text value"}], [{"text column", "a second text value"}]]
+    assert Enum.into(rows_stream, []) == [[{"text_column", "a text value"}], [{"text_column", "a second text value"}]]
   end
 
   test "can add options to Upsert operation" do
@@ -216,19 +228,21 @@ defmodule ExsodaTest.Writer do
 
     assert [{:ok, _}] = results
 
+    :done = wait_for_replication(fourfour)
+
     {:ok, rows_stream} = Reader.query(fourfour)
     |> Reader.run
 
     assert Enum.into(rows_stream, []) == [
-      [{"text column", "value 0"}],
-      [{"text column", "value 1"}],
-      [{"text column", "value 2"}],
-      [{"text column", "value 3"}],
-      [{"text column", "value 4"}],
-      [{"text column", "value 5"}],
-      [{"text column", "value 6"}],
-      [{"text column", "value 7"}],
-      [{"text column", "value 8"}]
+      [{"text_column", "value 0"}],
+      [{"text_column", "value 1"}],
+      [{"text_column", "value 2"}],
+      [{"text_column", "value 3"}],
+      [{"text_column", "value 4"}],
+      [{"text_column", "value 5"}],
+      [{"text_column", "value 6"}],
+      [{"text_column", "value 7"}],
+      [{"text_column", "value 8"}]
     ]
   end
 
@@ -249,14 +263,15 @@ defmodule ExsodaTest.Writer do
     |> Writer.run
 
     assert [{:ok, _}] = results
+    :done = wait_for_replication(fourfour)
 
     {:ok, rows_stream} = Reader.query(fourfour)
     |> Reader.run
 
-    assert Enum.into(rows_stream, []) == [[{"text column", "a text value"}], [{"text column", "a second text value"}]]
+    assert Enum.into(rows_stream, []) == [[{"text_column", "a text value"}], [{"text_column", "a second text value"}]]
   end
 
-    test "can do a streaming upsert" do
+  test "can do a streaming upsert" do
     [{:ok, %Response{body: %{"id" => fourfour}}}] = Writer.write()
     |> Writer.create("a name", %{description: "describes"})
     |> Writer.run
@@ -276,19 +291,21 @@ defmodule ExsodaTest.Writer do
 
     assert [{:ok, _}] = results
 
+    :done = wait_for_replication(fourfour)
+
     {:ok, rows_stream} = Reader.query(fourfour)
     |> Reader.run
 
     assert Enum.into(rows_stream, []) == [
-      [{"text column", "value 0"}],
-      [{"text column", "value 1"}],
-      [{"text column", "value 2"}],
-      [{"text column", "value 3"}],
-      [{"text column", "value 4"}],
-      [{"text column", "value 5"}],
-      [{"text column", "value 6"}],
-      [{"text column", "value 7"}],
-      [{"text column", "value 8"}]
+      [{"text_column", "value 0"}],
+      [{"text_column", "value 1"}],
+      [{"text_column", "value 2"}],
+      [{"text_column", "value 3"}],
+      [{"text_column", "value 4"}],
+      [{"text_column", "value 5"}],
+      [{"text_column", "value 6"}],
+      [{"text_column", "value 7"}],
+      [{"text_column", "value 8"}]
     ]
   end
 
