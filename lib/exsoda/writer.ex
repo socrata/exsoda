@@ -251,7 +251,7 @@ defmodule Exsoda.Writer do
 
       def run(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
         body = {:stream, byte_stream}
-        headers = %{content_type: "application/octet-stream", filename: filename}
+        headers = %{content_type: "application/octet-stream", filename: Http.encode(filename)}
         ops = %{opts: Map.merge(o.opts, headers)}
         url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
         Http.post(url, ops, body)
@@ -270,7 +270,7 @@ defmodule Exsoda.Writer do
       end
       def run(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
         body = {:stream, byte_stream}
-        headers = %{content_type: "application/octet-stream", filename: filename}
+        headers = %{content_type: "application/octet-stream", filename: Http.encode(filename)}
         ops = %{opts: Map.merge(o.opts, headers)}
         url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
         Http.post(url, ops, body)
@@ -284,7 +284,7 @@ defmodule Exsoda.Writer do
     defimpl Execute, for: __MODULE__ do
       def run(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
         body = {:stream, byte_stream}
-        headers = %{content_type: "application/octet-stream", filename: filename}
+        headers = %{content_type: "application/octet-stream", filename: Http.encode(filename)}
         ops = %{opts: Map.merge(o.opts, headers)}
         url = "/views/#{Http.encode(fourfour)}/files.txt"
         Http.post(url, ops, body)
