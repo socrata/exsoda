@@ -36,7 +36,6 @@ defmodule Exsoda.Reader do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
       "#{base}/views?method=getByIds&#{fourfours}"
-      |> IO.inspect
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
