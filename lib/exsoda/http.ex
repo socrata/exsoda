@@ -82,7 +82,8 @@ defmodule Exsoda.Http do
     Logger.info("Authenticating with request id: #{request_id}")
     with {:ok, base} <- base_url(%{opts: opts}),
          auth_path <- "#{base}/authenticate",
-         {:ok, %HTTPoison.Response{status_code: 200} = response} <- HTTPoison.post(auth_path, {:form, body}, headers) do
+         {:ok, h_opts} <- hackney_opts(),
+         {:ok, %HTTPoison.Response{status_code: 200} = response} <- HTTPoison.post(auth_path, {:form, body}, headers, [hackney: h_opts]) do
 
       Enum.find_value(response.headers, {:error, "There was no 'Set-Cookie' header in the authentication response."}, fn
         {"Set-Cookie", v} -> {:ok, v}
@@ -116,6 +117,7 @@ defmodule Exsoda.Http do
     {:ok, [{:basic_auth, {account, password}} | Config.get(:exsoda, :hackney_opts, [])]}
   end
   defp hackney_opts(_), do: {:ok, Config.get(:exsoda, :hackney_opts, [])}
+  defp hackney_opts(), do: {:ok, Config.get(:exsoda, :hackney_opts, [])}
 
   def http_opts(%{opts: options}) do
     with {:ok, h_opts} <- hackney_opts(options) do
