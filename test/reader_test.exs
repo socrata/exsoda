@@ -157,16 +157,16 @@ defmodule ExsodaTest.Reader do
     result = Enum.into(stream, [])
 
     assert result == [
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
-      [{"Region", "0km SE of Sakai, Japan"}, {"Magnitude", "4.6"}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}],
-      [{"Region", "100km E of Ile Hunter, New Caledonia"}, {"Magnitude", "5.6"}]
+      [{"region", "0km SE of Sakai, Japan"}, {"magnitude", "4.6"}],
+      [{"region", "0km SE of Sakai, Japan"}, {"magnitude", "4.6"}],
+      [{"region", "0km SE of Sakai, Japan"}, {"magnitude", "4.6"}],
+      [{"region", "0km SE of Sakai, Japan"}, {"magnitude", "4.6"}],
+      [{"region", "0km SE of Sakai, Japan"}, {"magnitude", "4.6"}],
+      [{"region", "100km E of Ile Hunter, New Caledonia"}, {"magnitude", "5.6"}],
+      [{"region", "100km E of Ile Hunter, New Caledonia"}, {"magnitude", "5.6"}],
+      [{"region", "100km E of Ile Hunter, New Caledonia"}, {"magnitude", "5.6"}],
+      [{"region", "100km E of Ile Hunter, New Caledonia"}, {"magnitude", "5.6"}],
+      [{"region", "100km E of Ile Hunter, New Caledonia"}, {"magnitude", "5.6"}]
     ]
   end
 
