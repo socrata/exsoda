@@ -58,10 +58,18 @@ defmodule Exsoda.Http do
       {"X-Socrata-Host", domain},
       {"X-Socrata-RequestId", request_id}
     ]
-    case Map.get(opts, :filename) do
+
+    headers = case Map.get(opts, :filename) do
       nil -> headers
       filename -> [ {"X-File-Name", filename} | headers ]
     end
+
+    headers = case Map.get(opts, :app_token) do
+      nil -> headers
+      app_token -> [ {"X-App-Token", app_token} | headers ]
+    end
+
+    headers
   end
 
   def get_cookie_impl(%{
