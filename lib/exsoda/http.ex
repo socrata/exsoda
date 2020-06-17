@@ -176,6 +176,7 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :request_id, random_request_id())
     |> add_opt(user_opts, :api_root, "/api")
     |> add_opt(user_opts, :protocol, "https")
+    |> add_opt(user_opts, :app_token, nil)
     |> add_opt(user_opts, :recv_timeout, 5_000)
     |> add_opt(user_opts, :timeout, 5_000)
   end
