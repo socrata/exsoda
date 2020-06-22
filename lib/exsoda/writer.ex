@@ -112,6 +112,18 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defmodule TransferOwnership do
+    defstruct to_user: nil, view_fourfours: []
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%TransferOwnership{to_user: to_user, view_fourfours: view_fourfours}, o) do
+        with {:ok, json} <- Poison.encode(%{userUid: to_user, viewUids: view_fourfours}) do
+          Http.put("/views.json?method=bulkTransferOwnership", o, json)
+        end
+      end
+    end
+  end
+
   defmodule ValidateView do
     defstruct fourfour: nil, properties: %{}
 
@@ -304,6 +316,10 @@ defmodule Exsoda.Writer do
 
   def update(%Operations{} = o, fourfour, properties, validate_only \\ false) do
     prepend(%UpdateView{fourfour: fourfour, properties: properties, validate_only: validate_only}, o)
+  end
+
+  def transfer_ownership(%Operations{} = o, to_user, view_fourfours) do
+    prepend(%TransferOwnership{to_user: to_user, view_fourfours: view_fourfours}, o)
   end
 
   def validate(%Operations{} = o, fourfour, properties) do
