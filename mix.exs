@@ -42,6 +42,7 @@ defmodule Exsoda.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 1.0"},
+      {:hackney, "~> 1.16.0", override: true},
       {:poison, "~> 2.2.0"},
       {:nimble_csv, "~> 0.1.0"},
       {:ex_doc, ">= 0.0.0", only: :dev},

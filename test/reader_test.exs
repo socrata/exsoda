@@ -15,7 +15,8 @@ defmodule ExsodaTest.Reader do
         api_root: "/api",
         protocol: "https",
         user_agent: "exsoda",
-        request_id: "fake_request_id"
+        request_id: "fake_request_id",
+        app_token: nil
       },
       fourfour: "four-four",
       query: query}
