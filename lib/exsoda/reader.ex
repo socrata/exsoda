@@ -18,6 +18,12 @@ defmodule Exsoda.Reader do
     }
   end
 
+  # Add the given get parameters (which should be a map with string keys and values)
+  # to the current query; existing parameters with the same keys will be overwritten.
+  def with_get_parameters(%Query{query: base_params} = query, %{} = params) do
+    %Query{query | query: Map.merge(base_params, params)}
+  end
+
   defp view_columns(decoded) do
     columns = decoded
     |> Map.get("columns", [])
@@ -41,46 +47,51 @@ defmodule Exsoda.Reader do
     end
   end
 
-  def get_view(%Query{fourfour: fourfour} = state) do
+  def get_view(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/views/#{Http.encode(fourfour)}.json"
+      query = URI.encode_query(query)
+      "#{base}/views/#{Http.encode(fourfour)}.json?#{query}"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
   end
 
-  def get_unpublished_copy(%Query{fourfour: fourfour} = state) do
+  def get_unpublished_copy(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/views/#{Http.encode(fourfour)}.json?method=getPublicationGroup&stage=unpublished"
+      query = URI.encode_query(Map.merge(query, %{"method" => "getPublicationGroup", "stage" => "unpublished"}))
+      "#{base}/views/#{Http.encode(fourfour)}.json?#{query}"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
   end
 
-  def get_published_copy(%Query{fourfour: fourfour} = state) do
+  def get_published_copy(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/views/#{Http.encode(fourfour)}.json?method=getPublicationGroup&stage=published"
+      query = URI.encode_query(Map.merge(query, %{"method" => "getPublicationGroup", "stage" => "published"}))
+      "#{base}/views/#{Http.encode(fourfour)}.json?#{query}"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
   end
 
-  def replication(%Query{fourfour: fourfour} = state) do
+  def replication(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/views/#{Http.encode(fourfour)}/replication.json"
+      query = URI.encode_query(query)
+      "#{base}/views/#{Http.encode(fourfour)}/replication.json?#{query}"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
   end
 
-  def geocoding(%Query{fourfour: fourfour} = state) do
+  def geocoding(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      "#{base}/geocoding/#{Http.encode(fourfour)}?method=pending"
+      query = URI.encode_query(Map.merge(query, %{ "method" => "pending" }))
+      "#{base}/geocoding/#{Http.encode(fourfour)}?#{query}"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
     end
