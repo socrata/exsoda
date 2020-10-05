@@ -81,11 +81,7 @@ defmodule Exsoda.Http do
     domain: domain,
     request_id: request_id} = opts) do
     body = [{"username", "#{spoofee_email} #{spoofer_email}"}, {"password", "#{spoofer_password}"}]
-    headers = [
-      {"X-Socrata-Host", domain},
-      {"Content-Type", "application/x-www-form-urlencoded"},
-      {"X-Socrata-RequestId", request_id}
-    ]
+    headers = [{"Content-Type", "application/x-www-form-urlencoded"} | headers(%{opts: opts})]
 
     Logger.info("Authenticating with request id: #{request_id}")
     with {:ok, base} <- base_url(%{opts: opts}),
