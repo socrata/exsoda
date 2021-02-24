@@ -252,7 +252,7 @@ defmodule Exsoda.Writer do
   end
 
   defmodule SetBlobForDraft do
-    defstruct fourfour: nil, filename: nil, file_path: nil, byte_stream: nil
+    defstruct fourfour: nil, filename: nil, file_path: nil, byte_stream: nil, content_type: nil
 
     defimpl Execute, for: __MODULE__ do
       def run(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, o) when is_binary(file_path) do
@@ -261,9 +261,9 @@ defmodule Exsoda.Writer do
         Http.post(url, o, body)
       end
 
-      def run(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
+      def run(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename, content_type: content_type}, o) do
         body = {:stream, byte_stream}
-        headers = %{content_type: "application/octet-stream", filename: Http.encode(filename)}
+        headers = %{content_type: content_type, filename: Http.encode(filename)}
         ops = %{opts: Map.merge(o.opts, headers)}
         url = "/imports2?method=setBlobForDraft&saveUnderViewUid=#{Http.encode(fourfour)}"
         Http.post(url, ops, body)
@@ -272,7 +272,7 @@ defmodule Exsoda.Writer do
   end
 
   defmodule ReplaceBlob do
-    defstruct fourfour: nil, filename: nil, file_path: nil, byte_stream: nil
+    defstruct fourfour: nil, filename: nil, file_path: nil, byte_stream: nil, content_type: nil
 
     defimpl Execute, for: __MODULE__ do
       def run(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, o) when is_binary(file_path) do
@@ -280,9 +280,9 @@ defmodule Exsoda.Writer do
         url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
         Http.post(url, o, body)
       end
-      def run(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
+      def run(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename, content_type: content_type}, o) do
         body = {:stream, byte_stream}
-        headers = %{content_type: "application/octet-stream", filename: Http.encode(filename)}
+        headers = %{content_type: content_type, filename: Http.encode(filename)}
         ops = %{opts: Map.merge(o.opts, headers)}
         url = "/views/#{Http.encode(fourfour)}?method=replaceBlob"
         Http.post(url, ops, body)
@@ -291,12 +291,12 @@ defmodule Exsoda.Writer do
   end
 
   defmodule UploadAttachment do
-    defstruct [:fourfour, :byte_stream, :filename]
+    defstruct [:fourfour, :byte_stream, :filename, :content_type]
 
     defimpl Execute, for: __MODULE__ do
-      def run(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o) do
+      def run(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename, content_type: content_type}, o) do
         body = {:stream, byte_stream}
-        headers = %{content_type: "application/octet-stream", filename: Http.encode(filename)}
+        headers = %{content_type: content_type, filename: Http.encode(filename)}
         ops = %{opts: Map.merge(o.opts, headers)}
         url = "/views/#{Http.encode(fourfour)}/files.txt"
         Http.post(url, ops, body)
@@ -382,18 +382,18 @@ defmodule Exsoda.Writer do
   def set_blob_for_draft(%Operations{} = o, fourfour, file_path) when is_binary(file_path) do
     prepend(%SetBlobForDraft{fourfour: fourfour, file_path: file_path}, o)
   end
-  def set_blob_for_draft(%Operations{} = o, fourfour, byte_stream, filename) when is_map(byte_stream) do
-    prepend(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o)
+  def set_blob_for_draft(%Operations{} = o, fourfour, byte_stream, filename, content_type \\ "application/octet-stream") when is_map(byte_stream) do
+    prepend(%SetBlobForDraft{fourfour: fourfour, byte_stream: byte_stream, filename: filename, content_type: content_type}, o)
   end
 
   def replace_blob(%Operations{} = o, fourfour, file_path) when is_binary(file_path) do
     prepend(%ReplaceBlob{fourfour: fourfour, file_path: file_path}, o)
   end
-  def replace_blob(%Operations{} = o, fourfour, byte_stream, filename) when is_map(byte_stream) do
-    prepend(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o)
+  def replace_blob(%Operations{} = o, fourfour, byte_stream, filename, content_type \\ "application/octet-stream") when is_map(byte_stream) do
+    prepend(%ReplaceBlob{fourfour: fourfour, byte_stream: byte_stream, filename: filename, content_type: content_type}, o)
   end
 
-  def upload_attachment(%Operations{} = o, fourfour, byte_stream, filename) do
-    prepend(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename}, o)
+  def upload_attachment(%Operations{} = o, fourfour, byte_stream, filename, content_type \\ "application/octet-stream") do
+    prepend(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename, content_type: content_type}, o)
   end
 end

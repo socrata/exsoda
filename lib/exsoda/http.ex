@@ -78,7 +78,7 @@ defmodule Exsoda.Http do
       spoofer_email: spoofer_email,
       spoofer_password: spoofer_password
     },
-    domain: domain,
+    domain: _domain,
     request_id: request_id} = opts) do
     body = [{"username", "#{spoofee_email} #{spoofer_email}"}, {"password", "#{spoofer_password}"}]
     headers = [{"Content-Type", "application/x-www-form-urlencoded"} | headers(%{opts: opts})]

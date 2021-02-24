@@ -429,7 +429,8 @@ defmodule ExsodaTest.Writer do
       %SetBlobForDraft{
         fourfour: "meow-meow",
         byte_stream: byte_stream,
-        filename: filename
+        filename: filename,
+        content_type: "application/octet-stream"
       }]
   end
 
@@ -443,7 +444,8 @@ defmodule ExsodaTest.Writer do
       %ReplaceBlob{
         fourfour: "meow-meow",
         byte_stream: byte_stream,
-        filename: filename
+        filename: filename,
+        content_type: "application/octet-stream"
       }]
   end
 
@@ -457,7 +459,8 @@ defmodule ExsodaTest.Writer do
       %UploadAttachment{
         fourfour: "meow-meow",
         byte_stream: byte_stream,
-        filename: filename
+        filename: filename,
+        content_type: "application/octet-stream"
       }]
   end
 
