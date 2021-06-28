@@ -304,6 +304,18 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defmodule Optimize do
+    defstruct [:fourfour]
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%Optimize{fourfour: fourfour}, o) do
+        body = {:stream, []}
+        url = "/views/#{Http.encode(fourfour)}?method=optimize"
+        Http.post(url, %{opts: o.opts}, body)
+      end
+    end
+  end
+
   # For backwards compat
   def write(options \\ []), do: Runner.new(options)
 
@@ -395,5 +407,9 @@ defmodule Exsoda.Writer do
 
   def upload_attachment(%Operations{} = o, fourfour, byte_stream, filename, content_type \\ "application/octet-stream") do
     prepend(%UploadAttachment{fourfour: fourfour, byte_stream: byte_stream, filename: filename, content_type: content_type}, o)
+  end
+
+  def optimize(%Operations{} = o, fourfour) do
+    prepend(%Optimize{fourfour: fourfour}, o)
   end
 end
