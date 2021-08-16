@@ -113,6 +113,18 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defmodule UpdateMeasure do
+    defstruct fourfour: nil, properties: %{}
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%UpdateMeasure{} = m, o) do
+        with {:ok, json} <- Poison.encode(m.properties) do
+          Http.put("/measures_v1/#{Http.encode(m.fourfour)}.json", o, json)
+        end
+      end
+    end
+  end
+
   defmodule TransferOwnership do
     defstruct to_user: nil, view_fourfours: []
 
@@ -329,6 +341,10 @@ defmodule Exsoda.Writer do
 
   def update(%Operations{} = o, fourfour, properties, validate_only \\ false) do
     prepend(%UpdateView{fourfour: fourfour, properties: properties, validate_only: validate_only}, o)
+  end
+
+  def update_measure(%Operations{} = o, fourfour, properties) do
+    prepend(%UpdateMeasure{fourfour: fourfour, properties: properties}, o)
   end
 
   def transfer_ownership(%Operations{} = o, to_user, view_fourfours) do
