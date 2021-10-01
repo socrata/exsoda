@@ -175,6 +175,7 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :app_token, nil)
     |> add_opt(user_opts, :recv_timeout, 5_000)
     |> add_opt(user_opts, :timeout, 5_000)
+    |> add_opt(user_opts, :params, user_opts[:params])
   end
 
   def as_json(result), do: as_json(result, [])
@@ -224,11 +225,12 @@ defmodule Exsoda.Http do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
       Logger.debug("Posting with request_id: #{op.opts.request_id}")
+      http_options_with_params = Keyword.put_new(http_options, :params, op.opts[:params])
       HTTPoison.post(
         "#{base}#{path}",
         body,
         headers(op),
-        http_options
+        http_options_with_params
       )
       |> maybe_202(path, op, fn -> post(path, op, body) end)
     end

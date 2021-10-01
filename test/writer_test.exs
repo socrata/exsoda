@@ -46,6 +46,16 @@ defmodule ExsodaTest.Writer do
     assert options.timeout == 2000
   end
 
+  test "can write with parameters" do
+    options = Writer.write([params: %{"k1" => "v1", "k2" => "v2"}, recv_timeout: 8000, timeout: 2000])
+              |> Writer.create("a name", %{description: "describes"})
+              |> Map.get(:opts)
+
+    assert options.recv_timeout == 8000
+    assert options.timeout == 2000
+    assert options.params == %{"k1" => "v1", "k2" => "v2"}
+  end
+
   test "running CreateView returns list of results" do
     results = Writer.write()
     |> Writer.create("a name", %{description: "describes"})
