@@ -324,7 +324,7 @@ defmodule Exsoda.Writer do
   def run(operations), do: Runner.run(operations)
 
   def create(%Operations{} = o, name, properties, opts \\ []) do
-    prepend(%CreateView{name: name, properties: properties, deleted_at: Keyword.get(opts, :deleted_at)})
+    prepend(%CreateView{name: name, properties: properties, deleted_at: Keyword.get(opts, :deleted_at)}, o)
   end
 
   def update(%Operations{} = o, fourfour, properties, validate_only \\ false) do
