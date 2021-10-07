@@ -87,7 +87,7 @@ defmodule Exsoda.Writer do
       def run(cv, o) do
         data = Map.merge(cv.properties, %{name: cv.name})
         with {:ok, json} <- Poison.encode(data) do
-          params = if cv.deleted_at == nil do "" else "?deleted_at=#{cv.deleted_at}" end
+          params = if cv.deleted_at == nil do "" else "?deleted_at=#{URI.encode(to_string(cv.deleted_at), &URI.char_unreserved?/1)}" end
           Http.post("/views.json" <> params, o, json)
         end
       end
@@ -323,12 +323,8 @@ defmodule Exsoda.Writer do
   def new(options \\ []), do: Runner.new(options)
   def run(operations), do: Runner.run(operations)
 
-  def create(%Operations{} = o, name, properties) do
-    prepend(%CreateView{name: name, properties: properties, deleted_at: nil}, o)
-  end
-
-  def create(%Operations{} = o, name, properties, deleted_at) do
-    prepend(%CreateView{name: name, properties: properties, deleted_at: deleted_at}, o)
+  def create(%Operations{} = o, name, properties, opts \\ []) do
+    prepend(%CreateView{name: name, properties: properties, deleted_at: Keyword.get(opts, :deleted_at)})
   end
 
   def update(%Operations{} = o, fourfour, properties, validate_only \\ false) do
