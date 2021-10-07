@@ -33,7 +33,8 @@ defmodule ExsodaTest.Writer do
 
     assert w.operations == [%CreateView{
       name: "a name",
-      properties: %{description: "describes"}
+      properties: %{description: "describes"},
+      deleted_at: nil
     }]
   end
 
