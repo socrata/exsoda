@@ -60,7 +60,7 @@ defmodule Exsoda.Reader do
   def get_unpublished_copy(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      query = URI.encode_query(Map.merge(query, %{"method" => "getPublicationGroup", "stage" => "unpublished"}))
+      query = URI.encode_query(Map.merge(query, %{"method" => "getLensPublicationGroup", "stage" => "unpublished"}))
       "#{base}/views/#{Http.encode(fourfour)}.json?#{query}"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
@@ -70,7 +70,7 @@ defmodule Exsoda.Reader do
   def get_published_copy(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
-      query = URI.encode_query(Map.merge(query, %{"method" => "getPublicationGroup", "stage" => "published"}))
+      query = URI.encode_query(Map.merge(query, %{"method" => "getLensPublicationGroup", "stage" => "published"}))
       "#{base}/views/#{Http.encode(fourfour)}.json?#{query}"
       |> HTTPoison.get(Http.headers(state), options)
       |> Http.as_json
