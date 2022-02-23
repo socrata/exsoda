@@ -10,7 +10,12 @@ defmodule Exsoda.Archives do
 
     defimpl Execute, for: __MODULE__ do
       def run(%StartJob{fourfour: fourfour, data_version: data_version}, o) do
-        Http.put("/archival/job/#{fourfour}/#{data_version}", o)
+        q = URI.encode_query(%{
+          method: "createArchive",
+          id: fourfour,
+          version: data_version
+        })
+        Http.put("/archival?#{q}", o)
       end
     end
   end
@@ -21,7 +26,12 @@ defmodule Exsoda.Archives do
 
     defimpl Execute, for: __MODULE__ do
       def run(%JobStatus{fourfour: fourfour, data_version: data_version}, o) do
-        Http.get("/archival/job/#{fourfour}/#{data_version}", o)
+        q = URI.encode_query(%{
+          method: "status",
+          id: fourfour,
+          version: data_version
+        })
+        Http.get("/archival?#{q}", o)
       end
     end
   end
