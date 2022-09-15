@@ -37,13 +37,15 @@ defmodule Exsoda.Archives do
   end
 
   defmodule ListArchives do
-    @enforce_keys [:fourfour]
+    @enforce_keys [:fourfour, :before, :limit]
     defstruct @enforce_keys
 
     defimpl Execute, for: __MODULE__ do
-      def run(%ListArchives{fourfour: fourfour}, o) do
+      def run(%ListArchives{fourfour: fourfour, before: before, limit: limit}, o) do
         q = URI.encode_query(%{
-          id: fourfour
+          id: fourfour,
+          beforeDate: before,
+          limit: limit
         })
         Http.get("/archival?#{q}", o)
       end
@@ -62,7 +64,7 @@ defmodule Exsoda.Archives do
     prepend(%JobStatus{fourfour: fourfour, data_version: data_version}, o)
   end
 
-  def list_archives(%Operations{} = o, fourfour) do
-    prepend(%ListArchives{fourfour: fourfour}, o)
+  def list_archives(%Operations{} = o, fourfour, before \\ nil, limit \\ nil) do
+    prepend(%ListArchives{fourfour: fourfour, before: before, limit: limit}, o)
   end
 end
