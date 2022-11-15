@@ -53,6 +53,23 @@ defmodule Exsoda.Archives do
   end
 
 
+  defmodule SetVisibility do
+    @enforce_keys [:fourfour, :version, :visible]
+    defstruct @enforce_keys
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%SetVisibility{fourfour: fourfour, version: version, visible: visible}, o) do
+        q = URI.encode_query(%{
+          method: "setVisibility",
+          id: fourfour,
+          version: version,
+          visible: visible
+        })
+        Http.put("/archival?#{q}", o)
+      end
+    end
+  end
+
   def new(options \\ []), do: Runner.new(options)
   def run(operations), do: Runner.run(operations)
 
@@ -66,5 +83,9 @@ defmodule Exsoda.Archives do
 
   def list_archives(%Operations{} = o, fourfour, before \\ nil, limit \\ nil) do
     prepend(%ListArchives{fourfour: fourfour, before: before, limit: limit}, o)
+  end
+
+  def set_visibility(%Operations{} = o, fourfour, version, visible) do
+    prepend(%SetVisibility{fourfour: fourfour, version: version, visible: visible}, o)
   end
 end
