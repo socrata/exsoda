@@ -57,6 +57,23 @@ defmodule Exsoda.Reader do
     end
   end
 
+  def find_tables(%Query{fourfour: fourfour} = state, soql, opts \\ []) do
+    replacing = Keyword.get(opts, :replacing)
+    params = Keyword.get(opts, :params, %{})
+    body = %{
+      "query" => soql,
+      "replacing" => replacing,
+      "params" => params
+    }
+    with {:ok, base} <- Http.base_url(state),
+         {:ok, options} <- Http.http_opts(state),
+         {:ok, json} <- Poison.encode(body) do
+      "#{base}/views/#{Http.encode(fourfour)}?method=findTables"
+      |> HTTPoison.post(json, Http.headers(state), options)
+      |> Http.as_json
+    end
+  end
+
   def get_unpublished_copy(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
