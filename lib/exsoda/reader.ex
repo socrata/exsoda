@@ -74,6 +74,15 @@ defmodule Exsoda.Reader do
     end
   end
 
+  def get_real_table_name(%Query{fourfour: fourfour} = state) do
+    with {:ok, base} <- Http.base_url(state),
+         {:ok, options} <- Http.http_opts(state) do
+      "#{base}/views/#{Http.encode(fourfour)}.json?method=getRealTableName"
+      |> HTTPoison.get(Http.headers(state), options)
+      |> Http.as_json
+    end
+  end
+
   def get_unpublished_copy(%Query{fourfour: fourfour, query: query} = state) do
     with {:ok, base} <- Http.base_url(state),
          {:ok, options} <- Http.http_opts(state) do
