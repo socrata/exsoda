@@ -12,7 +12,7 @@ defmodule Exsoda.Approvals do
     defimpl Execute, for: __MODULE__ do
       def run(%Guidance{} = gu, o) do
         query = URI.encode_query(%{
-            method: "guidance",
+            method: "guidance_v2",
             assetId: gu.catalog_revision_id
         })
         Http.get("/views/#{Http.encode(gu.fourfour)}/approvals/?#{query}", o)
