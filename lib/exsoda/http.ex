@@ -136,10 +136,11 @@ defmodule Exsoda.Http do
   end
 
   defp add_opt(opts, user_opts, key, default) do
-    case conf_fallback(user_opts, key) do
-      nil -> Map.put(opts, key, default)
-      value -> Map.put(opts, key, value)
+    r = case conf_fallback(user_opts, key) do
+      nil -> default
+      value -> value
     end
+    Map.put(opts, key, r)
   end
 
   defp add_opt(opts, user_opts, key) do
@@ -175,7 +176,7 @@ defmodule Exsoda.Http do
     |> add_opt(user_opts, :app_token, nil)
     |> add_opt(user_opts, :recv_timeout, 5_000)
     |> add_opt(user_opts, :timeout, 5_000)
-    |> add_opt(user_opts, :params, user_opts[:params])
+    |> add_opt(user_opts, :params, Keyword.get(user_opts, :params, []))
   end
 
   def as_json(result), do: as_json(result, [])

@@ -139,7 +139,7 @@ defmodule Exsoda.Reader do
       stream = "#{base}/id/#{Http.encode(state.fourfour)}.csv?#{query}"
       |> HTTPoison.get(Http.headers(state), [{:stream_to, self()} | options])
       |> as_line_stream
-      |> CSV.parse_stream(headers: false)
+      |> CSV.parse_stream(skip_headers: false)
       |> Stream.transform(nil,
         fn
           header, nil ->
