@@ -404,6 +404,10 @@ defmodule Exsoda.Writer do
     prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
   end
 
+  def permission(%Operations{} = o, fourfour, :site) do
+    prepend(%Permission{fourfour: fourfour, mode: "site"}, o)
+  end
+
   def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false) do
     prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o)
   end

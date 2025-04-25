@@ -388,6 +388,29 @@ defmodule ExsodaTest.Writer do
     assert !Map.has_key?(view, "grants")
   end
 
+  test "setting Site Permission fails for ODP domain" do
+    results = Writer.write()
+    |> Writer.create("a name", %{description: "describes"})
+    |> Writer.run
+
+    [{:ok, %Response{body: %{"id" => id} = view}}] = results
+
+    assert !Map.has_key?(view, "grants")
+
+    results = Writer.write()
+    |> Writer.permission(id, :public)
+    |> Writer.run
+
+    assert [{:ok, _}] = results
+
+    results = Writer.write()
+    |> Writer.permission(id, :site)
+    |> Writer.run
+
+    assert [{:error, response}] = results
+    assert {:ok, %{"message" => "Site scope not enabled", "error" => true}} = Poison.decode(response.body)
+  end
+
   test "setting the Permissions blob succeeds" do
     results = Writer.write()
     |> Writer.create("a name", %{description: "describes"})
