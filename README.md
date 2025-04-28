@@ -58,3 +58,9 @@ iex(2)> query("hcnj-rei3", domain: "data.austintexas.gov") |> get_view
  %{"oid" => 12724312, "displayType" => "table",
    "publicationAppendEnabled" => false, ...}}
 ```
+
+## Running Tests Locally
+The tests run using the domain cheetah.test-socrata.com . 
+export SOCRATA_USER=test-admin@socrata.com  
+export SOCRATA_PASSWORD=<LastPass - Cheetah test user accounts password>
+./test.sh
