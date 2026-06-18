@@ -329,6 +329,18 @@ defmodule Exsoda.Writer do
     end
   end
 
+  defmodule CreateIndex do
+    defstruct [:fourfour, :index_name, :expressions]
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%CreateIndex{fourfour: fourfour, index_name: index_name, expressions: expressions}, o) do
+        with {:ok, json} <- Poison.encode(%{"expressions" => expressions}) do
+          Http.put("/views/#{Http.encode(fourfour)}/indexes/#{Http.encode(index_name)}", o, json)
+        end
+      end
+    end
+  end
+
   # For backwards compat
   def write(options \\ []), do: Runner.new(options)
 
@@ -432,5 +444,9 @@ defmodule Exsoda.Writer do
 
   def optimize(%Operations{} = o, fourfour) do
     prepend(%Optimize{fourfour: fourfour}, o)
+  end
+
+  def create_index(%Operations{} = o, fourfour, index_name, expressions) do
+    prepend(%CreateSortIndex(fourfour: fourfour, index_name: index_name, expressions: expressions), o)
   end
 end
