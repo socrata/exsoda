@@ -249,12 +249,17 @@ defmodule Exsoda.Writer do
   end
 
   defmodule PrepareDraftForImport do
-    defstruct fourfour: nil, nbe: nil
+    defstruct fourfour: nil, nbe: nil, dici_location: nil
 
     defimpl Execute, for: __MODULE__ do
-      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, o) do
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil, dici_location: nil}, o) do
         json = Poison.encode!(%{})
         Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport", o, json)
+      end
+
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: false, dici_location: dici_location}, o) do
+        json = Poison.encode!(%{})
+        Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport&nbe=false&diciLocation=#{Http.encode(dici_location)}", o, json)
       end
 
       def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o) do
@@ -408,8 +413,8 @@ defmodule Exsoda.Writer do
     prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
   end
 
-  def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false) do
-    prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o)
+  def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false, dici_location \\ nil) do
+    prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe, dici_location: dici_location}, o)
   end
 
   def set_blob_for_draft(%Operations{} = o, fourfour, file_path) when is_binary(file_path) do
