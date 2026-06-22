@@ -56,7 +56,7 @@ defmodule Exsoda.Config do
         case Integer.parse(n) do
           {i, _} -> i
           :error ->
-            Logger.warn("Unable to parse '#{n}' as an integer, falling back to default for '#{key}' in #{app}!")
+            Logger.warning("Unable to parse '#{n}' as an integer, falling back to default for '#{key}' in #{app}!")
             default
         end
     end
