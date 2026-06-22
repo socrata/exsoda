@@ -4,7 +4,7 @@ defmodule Exsoda.Mixfile do
   def project do
     [app: :exsoda,
      version: "4.1.35",
-     elixir: "~> 1.3",
+     elixir: "~> 1.15",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
@@ -47,7 +47,8 @@ defmodule Exsoda.Mixfile do
       {:nimble_csv, "~> 1.0"},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:elixir_uuid, "~> 1.2"},
-      {:plug, "~> 1.0"}
+      {:plug, "~> 1.0"},
+      {:ssl_verify_fun, "~> 1.1.7", manager: :rebar3, override: true}
     ]
   end
 end
