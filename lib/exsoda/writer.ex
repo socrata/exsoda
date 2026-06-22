@@ -447,6 +447,6 @@ defmodule Exsoda.Writer do
   end
 
   def create_index(%Operations{} = o, fourfour, index_name, expressions) do
-    prepend(%CreateSortIndex{fourfour: fourfour, index_name: index_name, expressions: expressions}, o)
+    prepend(%CreateIndex{fourfour: fourfour, index_name: index_name, expressions: expressions}, o)
   end
 end
