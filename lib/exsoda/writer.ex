@@ -1,7 +1,7 @@
 defmodule Exsoda.Writer do
   alias Exsoda.Http
   alias Exsoda.Runner
-  alias Exsoda.Runner.{Operations, Execute}
+  alias Exsoda.Runner.{Execute, Operations}
   import Exsoda.Runner, only: [prepend: 2]
 
 
@@ -400,12 +400,12 @@ defmodule Exsoda.Writer do
     prepend(%Permission{fourfour: fourfour, mode: "private"}, o)
   end
 
-  def permissions(%Operations{} = o, fourfour, blob) when is_map(blob) do
-    prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
-  end
-
   def permission(%Operations{} = o, fourfour, :site) do
     prepend(%Permission{fourfour: fourfour, mode: "site"}, o)
+  end
+
+  def permissions(%Operations{} = o, fourfour, blob) when is_map(blob) do
+    prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
   end
 
   def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false) do

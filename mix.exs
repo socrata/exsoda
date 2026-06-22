@@ -41,13 +41,13 @@ defmodule Exsoda.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:httpoison, "~> 1.0"},
-      {:hackney, "~> 1.16.0"},
-      {:poison, "~> 2.2.0"},
-      {:nimble_csv, "~> 1.0"},
+      {:httpoison, "~> 2.2"},
+      {:hackney, "~> 1.21"},
+      {:poison, "~> 6.0"},
+      {:nimble_csv, "~> 1.3"},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:elixir_uuid, "~> 1.2"},
-      {:plug, "~> 1.0"}
+      {:plug, "~> 1.14"}
     ]
   end
 end
