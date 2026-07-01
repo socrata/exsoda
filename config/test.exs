@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :exsoda,
   account: {:system, "SOCRATA_USER"},

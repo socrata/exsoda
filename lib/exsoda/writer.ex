@@ -1,7 +1,7 @@
 defmodule Exsoda.Writer do
   alias Exsoda.Http
   alias Exsoda.Runner
-  alias Exsoda.Runner.{Operations, Execute}
+  alias Exsoda.Runner.{Execute, Operations}
   import Exsoda.Runner, only: [prepend: 2]
 
 
@@ -249,12 +249,17 @@ defmodule Exsoda.Writer do
   end
 
   defmodule PrepareDraftForImport do
-    defstruct fourfour: nil, nbe: nil
+    defstruct fourfour: nil, nbe: nil, dici_location: nil
 
     defimpl Execute, for: __MODULE__ do
-      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, o) do
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil, dici_location: nil}, o) do
         json = Poison.encode!(%{})
         Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport", o, json)
+      end
+
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: false, dici_location: dici_location}, o) do
+        json = Poison.encode!(%{})
+        Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport&nbe=false&diciLocation=#{Http.encode(dici_location)}", o, json)
       end
 
       def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o) do
