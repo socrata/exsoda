@@ -340,7 +340,7 @@ defmodule Exsoda.Writer do
     defimpl Execute, for: __MODULE__ do
       def run(%CreateIndex{fourfour: fourfour, index_name: index_name, expressions: expressions}, o) do
         with {:ok, json} <- Poison.encode(%{"expressions" => expressions}) do
-          Http.put("/views/#{Http.encode(fourfour)}/index/#{Http.encode(index_name)}?method=update", o, json)
+          Http.put("/views/#{Http.encode(fourfour)}/index/#{Http.encode(index_name)}", o, json)
         end
       end
     end
