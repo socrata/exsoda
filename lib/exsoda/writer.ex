@@ -425,8 +425,8 @@ defmodule Exsoda.Writer do
     prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
   end
 
-  def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false) do
-    prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o)
+  def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false, dici_location \\ nil) do
+    prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe, dici_location: dici_location}, o)
   end
 
   def set_blob_for_draft(%Operations{} = o, fourfour, file_path) when is_binary(file_path) do
