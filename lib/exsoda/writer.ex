@@ -1,7 +1,7 @@
 defmodule Exsoda.Writer do
   alias Exsoda.Http
   alias Exsoda.Runner
-  alias Exsoda.Runner.{Operations, Execute}
+  alias Exsoda.Runner.{Execute, Operations}
   import Exsoda.Runner, only: [prepend: 2]
 
 
@@ -249,12 +249,17 @@ defmodule Exsoda.Writer do
   end
 
   defmodule PrepareDraftForImport do
-    defstruct fourfour: nil, nbe: nil
+    defstruct fourfour: nil, nbe: nil, dici_location: nil
 
     defimpl Execute, for: __MODULE__ do
-      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil}, o) do
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nil, dici_location: nil}, o) do
         json = Poison.encode!(%{})
         Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport", o, json)
+      end
+
+      def run(%PrepareDraftForImport{fourfour: fourfour, nbe: false, dici_location: dici_location}, o) do
+        json = Poison.encode!(%{})
+        Http.patch("/views/#{Http.encode(fourfour)}?method=prepareDraftForImport&nbe=false&diciLocation=#{Http.encode(dici_location)}", o, json)
       end
 
       def run(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o) do
@@ -325,6 +330,18 @@ defmodule Exsoda.Writer do
         body = {:stream, []}
         url = "/views/#{Http.encode(fourfour)}?method=optimize"
         Http.post(url, %{opts: o.opts}, body)
+      end
+    end
+  end
+
+  defmodule CreateIndex do
+    defstruct [:fourfour, :index_name, :expressions]
+
+    defimpl Execute, for: __MODULE__ do
+      def run(%CreateIndex{fourfour: fourfour, index_name: index_name, expressions: expressions}, o) do
+        with {:ok, json} <- Poison.encode(%{"expressions" => expressions}) do
+          Http.put("/views/#{Http.encode(fourfour)}/index/#{Http.encode(index_name)}", o, json)
+        end
       end
     end
   end
@@ -400,16 +417,16 @@ defmodule Exsoda.Writer do
     prepend(%Permission{fourfour: fourfour, mode: "private"}, o)
   end
 
-  def permissions(%Operations{} = o, fourfour, blob) when is_map(blob) do
-    prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
-  end
-
   def permission(%Operations{} = o, fourfour, :site) do
     prepend(%Permission{fourfour: fourfour, mode: "site"}, o)
   end
 
-  def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false) do
-    prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe}, o)
+  def permissions(%Operations{} = o, fourfour, blob) when is_map(blob) do
+    prepend(%Permissions{fourfour: fourfour, blob: blob}, o)
+  end
+
+  def prepare_draft_for_import(%Operations{} = o, fourfour, nbe \\ false, dici_location \\ nil) do
+    prepend(%PrepareDraftForImport{fourfour: fourfour, nbe: nbe, dici_location: dici_location}, o)
   end
 
   def set_blob_for_draft(%Operations{} = o, fourfour, file_path) when is_binary(file_path) do
@@ -432,5 +449,9 @@ defmodule Exsoda.Writer do
 
   def optimize(%Operations{} = o, fourfour) do
     prepend(%Optimize{fourfour: fourfour}, o)
+  end
+
+  def create_index(%Operations{} = o, fourfour, index_name, expressions) do
+    prepend(%CreateIndex{fourfour: fourfour, index_name: index_name, expressions: expressions}, o)
   end
 end
