@@ -73,6 +73,7 @@ pipeline {
                         )
                     ]) {
                         sh '''#!/bin/bash
+                            rm -rf package
                             docker build --output="./package" .
                             cd package
                             ls *.tar | xargs curl -L -u$ARTIFACTORY_USERNAME:$ARTIFACTORY_PASSWORD -XPUT https://tylertech.jfrog.io/artifactory/datainsights-hex-local/tarballs/ -T
