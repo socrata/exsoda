@@ -2,17 +2,18 @@ defmodule Exsoda.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :exsoda,
-     version: "4.1.35",
-     elixir: "~> 1.3",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps(),
-     package: package(),
-     description: """
-      A Socrata Soda2 API wrapper
-     """
-   ]
+    [
+      app: :exsoda,
+      version: "4.1.36",
+      elixir: "~> 1.3",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      package: package(),
+      description: """
+       A Socrata Soda2 API wrapper
+      """
+    ]
   end
 
   defp package do
