@@ -44,7 +44,15 @@ pipeline {
             }
             steps {
                 script {
-                    mix deps.get
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'tyler-artifactory-write',
+                            usernameVariable: 'ARTIFACTORY_USERNAME',
+                            passwordVariable: 'ARTIFACTORY_PASSWORD'
+                        )
+                    ]) {
+                        sh mix deps.get
+                    }
                 }
             }
         }
@@ -55,7 +63,15 @@ pipeline {
             }
             steps {
                 script {
-                    mix deps.get
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'tyler-artifactory-write',
+                            usernameVariable: 'ARTIFACTORY_USERNAME',
+                            passwordVariable: 'ARTIFACTORY_PASSWORD'
+                        )
+                    ]) {
+                        sh mix deps.get
+                    }
                 }
             }
         }
