@@ -51,7 +51,9 @@ pipeline {
                             passwordVariable: 'ARTIFACTORY_PASSWORD'
                         )
                     ]) {
-                        sh mix deps.get
+                        sh '''#!/bin/bash
+                            mix deps.get
+                        '''
                     }
                 }
             }
@@ -70,7 +72,9 @@ pipeline {
                             passwordVariable: 'ARTIFACTORY_PASSWORD'
                         )
                     ]) {
-                        sh mix deps.get
+                        sh '''#!/bin/bash
+                            mix deps.get
+                        '''
                     }
                 }
             }
