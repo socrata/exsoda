@@ -52,7 +52,7 @@ pipeline {
                         )
                     ]) {
                         sh '''#!/bin/bash
-                            mix deps.get
+                            docker build --output="./package" .
                         '''
                     }
                 }
@@ -73,7 +73,7 @@ pipeline {
                         )
                     ]) {
                         sh '''#!/bin/bash
-                            mix deps.get
+                            docker build --output="./package" .
                         '''
                     }
                 }
