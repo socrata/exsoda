@@ -439,8 +439,7 @@ defmodule ExsodaTest.Writer do
     assert w.operations == [
       %PrepareDraftForImport{
         fourfour: "meow-meow",
-        nbe: false,
-        dici_location: nil
+        nbe: false
       }]
   end
 
