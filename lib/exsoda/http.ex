@@ -80,7 +80,15 @@ defmodule Exsoda.Http do
     },
     domain: _domain,
     request_id: request_id} = opts) do
-    body = [{"username", "#{spoofee_email} #{spoofer_email}"}, {"password", "#{spoofer_password}"}]
+
+    # Don't try to spoof yourself, just log in normally
+    spoof = if spoofee_email == spoofer_email do
+      "#{spoofee_email}"
+    else
+      "#{spoofee_email} #{spoofer_email}"
+    end
+
+    body = [{"username", spoof}, {"password", "#{spoofer_password}"}]
     headers = [{"Content-Type", "application/x-www-form-urlencoded"} | headers(%{opts: opts})]
 
     Logger.info("Authenticating with request id: #{request_id}")
