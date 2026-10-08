@@ -153,6 +153,10 @@ defmodule Exsoda.Writer do
     defstruct fourfour: nil, mode: nil, rows: [], options: nil
 
     defimpl Execute, for: __MODULE__ do
+      # Asks core to periodically write newlines to the response while the upsert is
+      # in progress so that load balancers don't time out the connection.
+      @keepalive_headers [{"X-Socrata-Upsert-Keepalive", "true"}]
+
       def run(%Upsert{rows: rows, mode: mode, fourfour: fourfour, options: options}, o) when is_list(rows) do
         with {:ok, json} <- Poison.encode(rows) do
           url = case options do
@@ -163,8 +167,8 @@ defmodule Exsoda.Writer do
           end
 
           case mode do
-            :append -> Http.post(url, o, json)
-            :replace -> Http.put(url, o, json)
+            :append -> Http.post(url, o, json, @keepalive_headers)
+            :replace -> Http.put(url, o, json, @keepalive_headers)
           end
         end
       end
@@ -189,8 +193,8 @@ defmodule Exsoda.Writer do
         end
 
         case mode do
-          :append -> Http.post(url, o, {:stream, json_stream})
-          :replace -> Http.put(url, o, {:stream, json_stream})
+          :append -> Http.post(url, o, {:stream, json_stream}, @keepalive_headers)
+          :replace -> Http.put(url, o, {:stream, json_stream}, @keepalive_headers)
         end
       end
     end

@@ -230,7 +230,7 @@ defmodule Exsoda.Http do
     end
   end
 
-  def post(path, op, body) do
+  def post(path, op, body, extra_headers \\ []) do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
       Logger.debug("Posting with request_id: #{op.opts.request_id}")
@@ -238,10 +238,10 @@ defmodule Exsoda.Http do
       HTTPoison.post(
         "#{base}#{path}",
         body,
-        headers(op),
+        headers(op) ++ extra_headers,
         http_options_with_params
       )
-      |> maybe_202(path, op, fn -> post(path, op, body) end)
+      |> maybe_202(path, op, fn -> post(path, op, body, extra_headers) end)
     end
   end
 
@@ -283,14 +283,14 @@ defmodule Exsoda.Http do
     as_json(resp)
   end
 
-  def put(path, op, body \\ "{}") do
+  def put(path, op, body \\ "{}", extra_headers \\ []) do
     with {:ok, base} <- base_url(op),
          {:ok, http_options} <- http_opts(op) do
       Logger.debug("Putting with request_id: #{op.opts.request_id}")
       HTTPoison.put(
         "#{base}#{path}",
         body,
-        headers(op),
+        headers(op) ++ extra_headers,
         http_options
       )
       |> as_json
